@@ -33,8 +33,8 @@ export default function Home() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">ShopEase</h1>
+            <ShoppingCart className="h-8 w-8 text-primary" aria-hidden="true" />
+            <h1 className="text-2xl font-bold text-foreground">ShopEase</h1>
           </div>
           <Button onClick={() => (window.location.href = getLoginUrl())}>
             Sign In
@@ -44,10 +44,10 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-5xl font-bold text-gray-900 mb-6">
+        <h2 className="text-5xl font-bold text-foreground mb-6">
           Manage Your Social Commerce in One Place
         </h2>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Post to Facebook, Instagram, and TikTok. Manage inventory. Track orders.
           All from a single, beautiful dashboard.
         </p>
@@ -66,28 +66,28 @@ export default function Home() {
           <h3 className="text-3xl font-bold text-center mb-12">Features</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <Share2 className="h-12 w-12 text-primary mx-auto mb-4" />
+              <Share2 className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
               <h4 className="font-semibold mb-2">Multi-Platform Posting</h4>
               <p className="text-gray-600 text-sm">
                 Post to all platforms simultaneously with scheduling
               </p>
             </div>
             <div className="text-center">
-              <Package className="h-12 w-12 text-primary mx-auto mb-4" />
+              <Package className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
               <h4 className="font-semibold mb-2">Inventory Management</h4>
               <p className="text-gray-600 text-sm">
                 Track stock and get low-stock alerts automatically
               </p>
             </div>
             <div className="text-center">
-              <ShoppingCart className="h-12 w-12 text-primary mx-auto mb-4" />
+              <ShoppingCart className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
               <h4 className="font-semibold mb-2">Unified Orders</h4>
               <p className="text-gray-600 text-sm">
                 See all orders from all platforms in one inbox
               </p>
             </div>
             <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
+              <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
               <h4 className="font-semibold mb-2">Analytics</h4>
               <p className="text-gray-600 text-sm">
                 Track sales trends and platform performance

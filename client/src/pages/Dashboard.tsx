@@ -63,9 +63,13 @@ export default function Dashboard() {
             <p className="text-muted-foreground mt-1">
               Welcome back! Here's your business overview.
             </p>
+            <Button onClick={() => navigate("/posts")} size="lg">
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+              Create Post
+            </Button>
           </div>
           <Button onClick={() => navigate("/posts")} size="lg">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             Create Post
           </Button>
         </div>
@@ -77,6 +81,7 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Products</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -95,6 +100,7 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-500" />
+              <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -115,6 +121,7 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
               <ShoppingCart className="h-4 w-4 text-blue-500" />
+              <ShoppingCart className="h-4 w-4 text-blue-500" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -133,6 +140,7 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-4 w-4 text-green-500" aria-hidden="true" />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -157,6 +165,7 @@ export default function Dashboard() {
             onClick={() => navigate("/posts")}
           >
             <MessageSquare className="mr-3 h-5 w-5" />
+              <MessageSquare className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Create Post</div>
               <div className="text-xs text-muted-foreground">
@@ -170,7 +179,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/inventory")}
           >
-            <Package className="mr-3 h-5 w-5" />
+              <Package className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Manage Inventory</div>
               <div className="text-xs text-muted-foreground">
@@ -184,7 +193,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/orders")}
           >
-            <ShoppingCart className="mr-3 h-5 w-5" />
+              <ShoppingCart className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Check Orders</div>
               <div className="text-xs text-muted-foreground">
@@ -198,7 +207,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/analytics")}
           >
-            <Eye className="mr-3 h-5 w-5" />
+              <Eye className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">View Analytics</div>
               <div className="text-xs text-muted-foreground">

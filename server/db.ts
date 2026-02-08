@@ -1,4 +1,5 @@
-import { eq, and, desc, gte } from "drizzle-orm";
+import { eq, and, desc, gte, sql, count, sum, lte } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, socialConnections, products, posts, orders, invoices, activityLog, analytics } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -16,6 +17,14 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+export async function ensureDb() {
+  const db = await getDb();
+  if (!db) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+  }
+  return db;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -221,27 +230,69 @@ export async function getAnalytics(userId: number, days = 30) {
     .orderBy(analytics.date);
 }
 
+// Platform Stats (DB-level aggregation)
+export async function getPlatformStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { facebook: { orders: 0, revenue: 0 }, instagram: { orders: 0, revenue: 0 }, tiktok: { orders: 0, revenue: 0 } };
+
+  const result = await db
+    .select({
+      platform: orders.platform,
+      orderCount: count(orders.id),
+      totalRevenue: sum(orders.totalAmount),
+    })
+    .from(orders)
+    .where(eq(orders.userId, userId))
+    .groupBy(orders.platform);
+
+  const stats: Record<string, { orders: number; revenue: number }> = {
+    facebook: { orders: 0, revenue: 0 },
+    instagram: { orders: 0, revenue: 0 },
+    tiktok: { orders: 0, revenue: 0 },
+  };
+
+  result.forEach((row) => {
+    if (row.platform && stats[row.platform]) {
+      stats[row.platform].orders = row.orderCount;
+      stats[row.platform].revenue = row.totalRevenue ? parseFloat(row.totalRevenue.toString()) : 0;
+    }
+  });
+
+  return stats;
+}
+
 // Dashboard Stats
 export async function getDashboardStats(userId: number) {
   const db = await getDb();
   if (!db) return null;
-  
-  const allProducts = await db.select().from(products).where(eq(products.userId, userId));
-  const lowStockProducts = allProducts.filter(p => p.stockQuantity <= p.lowStockThreshold);
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayOrders = await db
-    .select()
+
+  // Use DB-level aggregations instead of fetching all rows
+  const statsResult = await db
+    .select({
+      totalProducts: count(products.id),
+      lowStockCount: count(sql`CASE WHEN ${products.stockQuantity} <= ${products.lowStockThreshold} THEN 1 END`),
+    })
+    .from(products)
+    .where(eq(products.userId, userId));
+
+  const ordersStatsResult = await db
+    .select({
+      todayOrdersCount: count(orders.id),
+      todayRevenue: sum(orders.totalAmount),
+    })
     .from(orders)
     .where(and(eq(orders.userId, userId), gte(orders.createdAt, today)));
-  
-  const totalRevenue = todayOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount.toString()), 0);
-  
+
+  const productStats = statsResult[0] || { totalProducts: 0, lowStockCount: 0 };
+  const orderStats = ordersStatsResult[0] || { todayOrdersCount: 0, todayRevenue: null };
+
   return {
-    totalProducts: allProducts.length,
-    lowStockCount: lowStockProducts.length,
-    todayOrders: todayOrders.length,
-    todayRevenue: totalRevenue,
+    totalProducts: productStats.totalProducts,
+    lowStockCount: productStats.lowStockCount,
+    todayOrders: orderStats.todayOrdersCount,
+    todayRevenue: orderStats.todayRevenue ? parseFloat(orderStats.todayRevenue.toString()) : 0,
   };
 }

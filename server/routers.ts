@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   getSocialConnections,
@@ -17,7 +18,9 @@ import {
   getActivityLog,
   getAnalytics,
   getDashboardStats,
+  getPlatformStats,
   getDb,
+  ensureDb,
 } from "./db";
 import {
   socialConnections,
@@ -82,8 +85,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const result = await db
           .insert(socialConnections)
@@ -113,8 +115,7 @@ export const appRouter = router({
     disconnectAccount: protectedProcedure
       .input(z.object({ platform: z.enum(["facebook", "instagram", "tiktok"]) }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         await db
           .update(socialConnections)
@@ -157,8 +158,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const result = await db.insert(products).values({
           userId: ctx.user.id,
@@ -193,11 +193,10 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new Error("Product not found");
+        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
 
         const updateData: any = { updatedAt: new Date() };
         if (input.name !== undefined) updateData.name = input.name;
@@ -219,11 +218,10 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new Error("Product not found");
+        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
 
         await db.delete(products).where(eq(products.id, input.id));
 
@@ -233,11 +231,10 @@ export const appRouter = router({
     adjustStock: protectedProcedure
       .input(z.object({ id: z.number(), adjustment: z.number().int() }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new Error("Product not found");
+        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
 
         const newQuantity = Math.max(0, product.stockQuantity + input.adjustment);
         await db
@@ -273,8 +270,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const status = input.scheduledAt ? "scheduled" : "draft";
 
@@ -303,11 +299,10 @@ export const appRouter = router({
     publish: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const post = await getPost(ctx.user.id, input.id);
-        if (!post) throw new Error("Post not found");
+        if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
 
         await db
           .update(posts)
@@ -332,11 +327,10 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const post = await getPost(ctx.user.id, input.id);
-        if (!post) throw new Error("Post not found");
+        if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
 
         await db.delete(posts).where(eq(posts.id, input.id));
 
@@ -389,8 +383,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const result = await db.insert(orders).values({
           userId: ctx.user.id,
@@ -427,11 +420,10 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const order = await getOrder(ctx.user.id, input.id);
-        if (!order) throw new Error("Order not found");
+        if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
 
         await db
           .update(orders)
@@ -476,11 +468,10 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const order = await getOrder(ctx.user.id, input.orderId);
-        if (!order) throw new Error("Order not found");
+        if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
 
         const result = await db.insert(invoices).values({
           userId: ctx.user.id,
@@ -501,11 +492,10 @@ export const appRouter = router({
     updateStatus: protectedProcedure
       .input(z.object({ id: z.number(), status: z.enum(["draft", "sent", "viewed", "paid", "overdue"]) }))
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        const db = await ensureDb();
 
         const invoice = await getInvoice(ctx.user.id, input.id);
-        if (!invoice) throw new Error("Invoice not found");
+        if (!invoice) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found" });
 
         await db
           .update(invoices)
@@ -525,21 +515,7 @@ export const appRouter = router({
       }),
 
     getPlatformStats: protectedProcedure.query(async ({ ctx }) => {
-      const userOrders = await getOrders(ctx.user.id);
-      const platformStats: Record<string, { orders: number; revenue: number }> = {
-        facebook: { orders: 0, revenue: 0 },
-        instagram: { orders: 0, revenue: 0 },
-        tiktok: { orders: 0, revenue: 0 },
-      };
-
-      userOrders.forEach((order) => {
-        if (platformStats[order.platform]) {
-          platformStats[order.platform].orders += 1;
-          platformStats[order.platform].revenue += parseFloat(order.totalAmount.toString());
-        }
-      });
-
-      return platformStats;
+      return getPlatformStats(ctx.user.id);
     }),
   }),
 });

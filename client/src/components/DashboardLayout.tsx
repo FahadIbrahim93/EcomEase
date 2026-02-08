@@ -239,10 +239,30 @@ function DashboardLayoutContent({
           </SidebarFooter>
         </Sidebar>
         <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize navigation"
+          aria-valuemin={MIN_WIDTH}
+          aria-valuemax={MAX_WIDTH}
+          aria-valuenow={sidebarWidth}
+          tabIndex={isCollapsed ? -1 : 0}
           className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
           onMouseDown={() => {
             if (isCollapsed) return;
             setIsResizing(true);
+          }}
+          onKeyDown={(e) => {
+            if (isCollapsed) return;
+            // Arrow keys change width by 8px, Home/End set to min/max
+            if (e.key === "ArrowLeft") {
+              setSidebarWidth((w) => Math.max(MIN_WIDTH, w - 8));
+            } else if (e.key === "ArrowRight") {
+              setSidebarWidth((w) => Math.min(MAX_WIDTH, w + 8));
+            } else if (e.key === "Home") {
+              setSidebarWidth(MIN_WIDTH);
+            } else if (e.key === "End") {
+              setSidebarWidth(MAX_WIDTH);
+            }
           }}
           style={{ zIndex: 50 }}
         />
