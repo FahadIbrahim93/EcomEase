@@ -1,3 +1,4 @@
+import { eq, and } from "drizzle-orm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -521,7 +522,3 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
-// Helper imports
-import { eq } from "drizzle-orm";
-import { and } from "drizzle-orm";

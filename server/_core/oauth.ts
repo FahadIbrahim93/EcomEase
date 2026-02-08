@@ -3,6 +3,8 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { generateCsrfToken, setCsrfToken } from "./csrf";
+import { ENV } from "./env";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -43,6 +45,10 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      // Initialize CSRF protection on successful login
+      const csrfToken = generateCsrfToken();
+      setCsrfToken(res, csrfToken, ENV.isProduction);
 
       res.redirect(302, "/");
     } catch (error) {

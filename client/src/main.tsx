@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { getCookie } from "./lib/utils";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,10 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      headers() {
+        const token = getCookie("XSRF-TOKEN");
+        return token ? { "X-CSRF-Token": token } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

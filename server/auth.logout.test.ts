@@ -29,8 +29,11 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     user,
     req: {
       protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
+      headers: {
+        "x-csrf-token": "test-token",
+        "cookie": "__Host-csrf=test-token",
+      },
+    } as any,
     res: {
       clearCookie: (name: string, options: Record<string, unknown>) => {
         clearedCookies.push({ name, options });
