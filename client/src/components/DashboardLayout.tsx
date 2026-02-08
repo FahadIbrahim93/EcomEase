@@ -48,7 +48,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
@@ -106,7 +106,7 @@ export default function DashboardLayout({
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   sidebarWidth: number;
-  setSidebarWidth: (width: number) => void;
+  setSidebarWidth: React.Dispatch<React.SetStateAction<number>>;
 };
 
 function DashboardLayoutContent({
@@ -253,13 +253,13 @@ function DashboardLayoutContent({
             if (isCollapsed) return;
             setIsResizing(true);
           }}
-          onKeyDown={(e) => {
+          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
             if (isCollapsed) return;
             // Arrow keys change width by 8px, Home/End set to min/max
             if (e.key === "ArrowLeft") {
-              setSidebarWidth((w) => Math.max(MIN_WIDTH, w - 8));
+              setSidebarWidth((w: number) => Math.max(MIN_WIDTH, w - 8));
             } else if (e.key === "ArrowRight") {
-              setSidebarWidth((w) => Math.min(MAX_WIDTH, w + 8));
+              setSidebarWidth((w: number) => Math.min(MAX_WIDTH, w + 8));
             } else if (e.key === "Home") {
               setSidebarWidth(MIN_WIDTH);
             } else if (e.key === "End") {

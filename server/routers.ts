@@ -4,6 +4,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { invokeLLM } from "./_core/llm";
 import { z } from "zod";
 import {
   getSocialConnections,
@@ -244,6 +245,46 @@ export const appRouter = router({
           .where(eq(products.id, input.id));
 
         return { success: true, newQuantity };
+      }),
+
+    generateDescription: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          category: z.string().optional(),
+          price: z.string().optional(),
+          sku: z.string().optional(),
+          existingDescription: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const prompt = `Generate a compelling product description for e-commerce. Product: ${input.name}. Write 2-3 persuasive sentences highlighting benefits, suitable for social commerce. No markdown.`;
+
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert e-commerce copywriter. Create compelling product descriptions that drive conversions.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+          });
+
+          const description =
+            response.choices[0]?.message?.content || "Unable to generate description";
+
+          return {
+            success: true,
+            description: typeof description === "string" ? description : JSON.stringify(description),
+          };
+        } catch (error) {
+          console.error("AI description generation error:", error);
+          throw new Error("Failed to generate description. Please try again.");
+        }
       }),
   }),
 

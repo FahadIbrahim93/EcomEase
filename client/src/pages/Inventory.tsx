@@ -26,6 +26,8 @@ import {
   Trash2,
   AlertTriangle,
   Package,
+  Sparkles,
+  Loader,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
@@ -38,6 +40,7 @@ export default function Inventory() {
   const updateProductMutation = trpc.products.update.useMutation();
   const deleteProductMutation = trpc.products.delete.useMutation();
   const adjustStockMutation = trpc.products.adjustStock.useMutation();
+  const generateDescriptionMutation = trpc.products.generateDescription.useMutation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -193,7 +196,43 @@ export default function Inventory() {
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Description</Label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const result = await generateDescriptionMutation.mutateAsync({
+                            name: formData.name,
+                            category: formData.category,
+                            price: formData.price,
+                            sku: formData.sku,
+                            existingDescription: formData.description,
+                          });
+                          if (result.success) {
+                            setFormData({ ...formData, description: result.description });
+                            toast.success("Description generated!");
+                          }
+                        } catch (error) {
+                          toast.error("Failed to generate description");
+                        }
+                      }}
+                      disabled={!formData.name || generateDescriptionMutation.isPending}
+                    >
+                      {generateDescriptionMutation.isPending ? (
+                        <>
+                          <Loader className="mr-2 h-3 w-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-3 w-3" />
+                          AI Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Input
                     placeholder="Product description"
                     value={formData.description}
