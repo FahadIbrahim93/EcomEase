@@ -1,8 +1,9 @@
 import { randomBytes } from "crypto";
 import { Response, Request } from "express";
+import { parse as parseCookies } from "cookie";
 
 const CSRF_HEADER_NAME = "X-CSRF-Token";
-const CSRF_COOKIE_NAME = "__host-csrf";
+const CSRF_COOKIE_NAME = "__Host-csrf";
 
 /**
  * Generate a random CSRF token
@@ -17,16 +18,28 @@ export function generateCsrfToken(): string {
  * Header is sent for client to include in mutation requests
  */
 export function setCsrfToken(res: Response, token: string, isSecure: boolean): void {
-  // HttpOnly cookie to prevent XSS access
+  // 1 year in milliseconds to match session duration
+  const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+  // HttpOnly cookie for server-side verification (secure storage)
   res.cookie(CSRF_COOKIE_NAME, token, {
     httpOnly: true,
     secure: isSecure,
     sameSite: "strict",
     path: "/",
-    maxAge: 3600000, // 1 hour
+    maxAge: ONE_YEAR_MS,
   });
 
-  // Also send in header so client-side JS can read it (for form submissions or fetch headers)
+  // Non-HttpOnly cookie so client-side can read it and send it back in a header
+  res.cookie("XSRF-TOKEN", token, {
+    httpOnly: false,
+    secure: isSecure,
+    sameSite: "strict",
+    path: "/",
+    maxAge: ONE_YEAR_MS,
+  });
+
+  // Also send in header for the current request
   res.setHeader(CSRF_HEADER_NAME, token);
 }
 
@@ -38,7 +51,10 @@ export function setCsrfToken(res: Response, token: string, isSecure: boolean): v
  */
 export function verifyCsrfToken(req: Request): boolean {
   const headerToken = req.headers[CSRF_HEADER_NAME.toLowerCase()] as string | undefined;
-  const cookieToken = req.cookies[CSRF_COOKIE_NAME];
+
+  // Fallback to manual cookie parsing if cookie-parser middleware is not used
+  const cookies = req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
+  const cookieToken = cookies[CSRF_COOKIE_NAME];
 
   // Both must exist and match
   if (!headerToken || !cookieToken) {
