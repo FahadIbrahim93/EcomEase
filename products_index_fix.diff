@@ -1,0 +1,16 @@
+--- a/drizzle/schema.ts
++++ b/drizzle/schema.ts
+@@ -1,4 +1,4 @@
+-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json } from "drizzle-orm/mysql-core";
++import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, index } from "drizzle-orm/mysql-core";
+ import { relations } from "drizzle-orm";
+
+ /**
+@@ -53,6 +53,9 @@
+   isActive: boolean("isActive").default(true).notNull(),
+   createdAt: timestamp("createdAt").defaultNow().notNull(),
+   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
++}, (table) => ({
++  userIdIdx: index("userId_idx").on(table.userId),
++  categoryIdx: index("category_idx").on(table.category),
+ }));
