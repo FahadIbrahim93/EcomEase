@@ -37,11 +37,26 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+/**
+ * Helper to extract a cookie value by name
+ */
+function getCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  return undefined;
+}
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      async headers() {
+        const token = getCookie("XSRF-TOKEN");
+        return token ? { "X-CSRF-Token": token } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

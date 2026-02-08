@@ -7,6 +7,9 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { parse as parseCookie } from "cookie";
+import { generateCsrfToken, setCsrfToken, CSRF_COOKIE_NAME } from "./csrf";
+import { ENV } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +36,19 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // CSRF bootstrapping middleware: Ensure every client has a CSRF token
+  app.use((req, res, next) => {
+    const cookieHeader = req.headers.cookie;
+    const cookies = cookieHeader ? parseCookie(cookieHeader) : {};
+
+    if (!cookies[CSRF_COOKIE_NAME]) {
+      const token = generateCsrfToken();
+      setCsrfToken(res, token, ENV.isProduction);
+    }
+    next();
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
