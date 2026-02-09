@@ -2,7 +2,7 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import { parse as parseCookies } from "cookie";
 import type { User } from "../../drizzle/schema";
 import { sdk } from "./sdk";
-import { generateCsrfToken, setCsrfToken } from "./csrf";
+import { generateCsrfToken, setCsrfToken, CSRF_COOKIE_NAME } from "./csrf";
 import { ENV } from "./env";
 
 export type TrpcContext = {
@@ -27,7 +27,7 @@ export async function createContext(
   // Ensure CSRF token is initialized for both authenticated and anonymous users.
   // We check for the httpOnly cookie specifically.
   const cookies = req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
-  if (!cookies["__Host-csrf"]) {
+  if (!cookies[CSRF_COOKIE_NAME]) {
     const token = generateCsrfToken();
     setCsrfToken(res, token, ENV.isProduction);
   }

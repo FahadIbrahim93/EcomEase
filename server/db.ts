@@ -1,7 +1,18 @@
-import { eq, and, desc, gte, sql, count, sum, lte } from "drizzle-orm";
+import { eq, and, desc, gte, sql, count, sum } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, socialConnections, products, posts, orders, invoices, activityLog, analytics } from "../drizzle/schema";
+import { logger } from "./_core/logger";
+import {
+  InsertUser,
+  users,
+  socialConnections,
+  products,
+  posts,
+  orders,
+  invoices,
+  activityLog,
+  analytics
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -10,9 +21,10 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
+      // In production, drizzle(connectionString) with mysql2 uses a connection pool by default.
       _db = drizzle(process.env.DATABASE_URL);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      logger.warn("[Database] Failed to connect", { error });
       _db = null;
     }
   }
@@ -28,60 +40,37 @@ export async function ensureDb() {
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
+  if (!user.openId) throw new Error("User openId is required for upsert");
 
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
+    logger.warn("[Database] Cannot upsert user: database not available");
     return;
   }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
+    const { openId, ...rest } = user;
+    const role = user.role ?? (openId === ENV.ownerOpenId ? "admin" : undefined);
+    const lastSignedIn = user.lastSignedIn ?? new Date();
 
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
+    const values = {
+      openId,
+      ...rest,
+      role,
+      lastSignedIn,
     };
 
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
+    const updateSet = {
+      ...rest,
+      role,
+      lastSignedIn,
+    };
 
     await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
+      set: updateSet as any,
     });
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
+    logger.error("[Database] Failed to upsert user", { error });
     throw error;
   }
 }
@@ -89,24 +78,22 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
+    logger.warn("[Database] Cannot get user by openId: database not available");
     return undefined;
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getUserById(userId: number) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
+    logger.warn("[Database] Cannot get user by id: database not available");
     return undefined;
   }
 
   const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -117,7 +104,7 @@ export async function getSocialConnections(userId: number) {
   return db.select().from(socialConnections).where(eq(socialConnections.userId, userId));
 }
 
-export async function getSocialConnection(userId: number, platform: string) {
+export async function getSocialConnection(userId: number, platform: "facebook" | "instagram" | "tiktok") {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db
@@ -126,7 +113,7 @@ export async function getSocialConnection(userId: number, platform: string) {
     .where(
       and(
         eq(socialConnections.userId, userId),
-        eq(socialConnections.platform, platform as any)
+        eq(socialConnections.platform, platform)
       )
     )
     .limit(1);
@@ -134,10 +121,19 @@ export async function getSocialConnection(userId: number, platform: string) {
 }
 
 // Products
-export async function getProducts(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(products).where(eq(products.userId, userId));
+export async function getProducts(userId: number, options?: { limit?: number; offset?: number }) {
+  const db = await ensureDb();
+
+  let query = db.select().from(products).where(eq(products.userId, userId));
+
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as any;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as any;
+  }
+
+  return query;
 }
 
 export async function getProduct(userId: number, productId: number) {
@@ -152,10 +148,20 @@ export async function getProduct(userId: number, productId: number) {
 }
 
 // Posts
-export async function getPosts(userId: number) {
+export async function getPosts(userId: number, options?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(posts).where(eq(posts.userId, userId)).orderBy(desc(posts.createdAt));
+
+  let query = db.select().from(posts).where(eq(posts.userId, userId)).orderBy(desc(posts.createdAt));
+
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as any;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as any;
+  }
+
+  return query;
 }
 
 export async function getPost(userId: number, postId: number) {
@@ -170,28 +176,65 @@ export async function getPost(userId: number, postId: number) {
 }
 
 // Orders
-export async function getOrders(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+export async function getOrders(userId: number, options?: { limit?: number; offset?: number; status?: string }) {
+  const db = await ensureDb();
+
+  const conditions = [eq(orders.userId, userId)];
+  if (options?.status) {
+    conditions.push(eq(orders.status, options.status as any));
+  }
+
+  let query = db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
+
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as any;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as any;
+  }
+
+  return query;
 }
 
 export async function getOrder(userId: number, orderId: number) {
   const db = await getDb();
   if (!db) return undefined;
+
+  // Use query API for cleaner relation fetching if needed,
+  // but sticking to select() for consistency with the rest of the file
   const result = await db
     .select()
     .from(orders)
     .where(and(eq(orders.userId, userId), eq(orders.id, orderId)))
     .limit(1);
-  return result[0];
+
+  if (result.length === 0) return undefined;
+  const order = result[0];
+
+  // Fetch items for this order
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, order.id));
+
+  return { ...order, items };
 }
 
 // Invoices
-export async function getInvoices(userId: number) {
+export async function getInvoices(userId: number, options?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
+
+  let query = db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
+
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as any;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as any;
+  }
+
+  return query;
 }
 
 export async function getInvoice(userId: number, invoiceId: number) {
@@ -230,7 +273,7 @@ export async function getAnalytics(userId: number, days = 30) {
     .orderBy(analytics.date);
 }
 
-// Platform Stats (DB-level aggregation)
+// Platform Stats
 export async function getPlatformStats(userId: number) {
   const db = await getDb();
   if (!db) return { facebook: { orders: 0, revenue: 0 }, instagram: { orders: 0, revenue: 0 }, tiktok: { orders: 0, revenue: 0 } };
@@ -269,7 +312,6 @@ export async function getDashboardStats(userId: number) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Use DB-level aggregations instead of fetching all rows
   const statsResult = await db
     .select({
       totalProducts: count(products.id),

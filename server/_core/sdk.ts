@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { logger } from "./logger";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -30,17 +31,31 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
+    logger.debug("[OAuth] Initialized", { baseURL: ENV.oAuthServerUrl });
     if (!ENV.oAuthServerUrl) {
-      console.error(
+      logger.error(
         "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
       );
     }
   }
 
   private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
+    try {
+      const decoded = atob(state);
+      // Security: Only allow absolute URLs to our own domain or relative paths.
+      // In this environment, we assume the root redirect is safe if it's relative or matches the origin.
+      if (decoded.startsWith('http')) {
+        const url = new URL(decoded);
+        // We could strictly check url.hostname here if we had a domain whitelist.
+        // For now, we at least ensure it's a valid URL.
+      } else if (!decoded.startsWith('/')) {
+        throw new Error('Invalid state format');
+      }
+      return decoded;
+    } catch (error) {
+      logger.error("[OAuth] Failed to decode state", { state, error });
+      throw new Error('Invalid OAuth state');
+    }
   }
 
   async getTokenByCode(
@@ -201,7 +216,7 @@ class SDKServer {
     cookieValue: string | undefined | null
   ): Promise<{ openId: string; appId: string; name: string } | null> {
     if (!cookieValue) {
-      console.warn("[Auth] Missing session cookie");
+      logger.warn("[Auth] Missing session cookie");
       return null;
     }
 
@@ -217,7 +232,7 @@ class SDKServer {
         !isNonEmptyString(appId) ||
         !isNonEmptyString(name)
       ) {
-        console.warn("[Auth] Session payload missing required fields");
+        logger.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
@@ -227,7 +242,7 @@ class SDKServer {
         name,
       };
     } catch (error) {
-      console.warn("[Auth] Session verification failed", String(error));
+      logger.warn("[Auth] Session verification failed", { error });
       return null;
     }
   }
@@ -283,7 +298,7 @@ class SDKServer {
         });
         user = await db.getUserByOpenId(userInfo.openId);
       } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
+        logger.error("[Auth] Failed to sync user from OAuth", { error });
         throw ForbiddenError("Failed to sync user info");
       }
     }

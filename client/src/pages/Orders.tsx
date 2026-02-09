@@ -37,6 +37,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Order } from "@shared/types";
 
 export default function Orders() {
   const ordersQuery = trpc.orders.list.useQuery({ status: undefined });
@@ -44,7 +45,7 @@ export default function Orders() {
   const createInvoiceMutation = trpc.invoices.create.useMutation();
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
@@ -60,7 +61,7 @@ export default function Orders() {
     }
   };
 
-  const handleGenerateInvoice = async (order: any) => {
+  const handleGenerateInvoice = async (order: Order) => {
     try {
       const invoiceNumber = `INV-${Date.now()}`;
       await createInvoiceMutation.mutateAsync({
@@ -297,9 +298,11 @@ export default function Orders() {
                                     <div className="space-y-2">
                                       {(() => {
                                         try {
-                                          const itemsStr = typeof order.items === 'string' ? order.items : '[]';
-                                          const items = JSON.parse(itemsStr) as any[];
-                                          return items.map((item, idx) => (
+                                          const items = Array.isArray(order.items)
+                                            ? order.items
+                                            : JSON.parse(typeof order.items === 'string' ? order.items : '[]');
+
+                                          return (items as any[]).map((item, idx) => (
                                             <div
                                               key={idx}
                                               className="flex justify-between text-sm"

@@ -1,17 +1,34 @@
 import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
+import { getDb } from "../db";
 
 export const systemRouter = router({
   health: publicProcedure
     .input(
       z.object({
-        timestamp: z.number().min(0, "timestamp cannot be negative"),
+        timestamp: z.number().optional(),
       })
     )
-    .query(() => ({
-      ok: true,
-    })),
+    .query(async () => {
+      let dbStatus = "unknown";
+      try {
+        const db = await getDb();
+        if (db) {
+          dbStatus = "connected";
+        } else {
+          dbStatus = "not_configured";
+        }
+      } catch (err) {
+        dbStatus = "error";
+      }
+
+      return {
+        status: "ok",
+        db: dbStatus,
+        uptime: process.uptime(),
+      };
+    }),
 
   notifyOwner: adminProcedure
     .input(

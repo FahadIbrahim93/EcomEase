@@ -31,8 +31,10 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Product } from "@shared/types";
 
 export default function Inventory() {
+  const utils = trpc.useUtils();
   const productsQuery = trpc.products.list.useQuery();
   const createProductMutation = trpc.products.create.useMutation();
   const updateProductMutation = trpc.products.update.useMutation();
@@ -53,7 +55,7 @@ export default function Inventory() {
     category: "",
   });
 
-  const handleOpenDialog = (product?: any) => {
+  const handleOpenDialog = (product?: Product) => {
     if (product) {
       setEditingId(product.id);
       setFormData({
@@ -100,7 +102,7 @@ export default function Inventory() {
         toast.success("Product created!");
       }
       setIsOpen(false);
-      productsQuery.refetch();
+      utils.products.list.invalidate();
     } catch (error) {
       toast.error("Failed to save product");
     }
@@ -111,7 +113,7 @@ export default function Inventory() {
       try {
         await deleteProductMutation.mutateAsync({ id });
         toast.success("Product deleted!");
-        productsQuery.refetch();
+        utils.products.list.invalidate();
       } catch (error) {
         toast.error("Failed to delete product");
       }
@@ -122,7 +124,7 @@ export default function Inventory() {
     try {
       await adjustStockMutation.mutateAsync({ id, adjustment });
       toast.success("Stock updated!");
-      productsQuery.refetch();
+      utils.products.list.invalidate();
     } catch (error) {
       toast.error("Failed to adjust stock");
     }

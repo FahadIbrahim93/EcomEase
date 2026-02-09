@@ -5,6 +5,7 @@ import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 import { generateCsrfToken, setCsrfToken } from "./csrf";
 import { ENV } from "./env";
+import { logger } from "./logger";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -52,7 +53,7 @@ export function registerOAuthRoutes(app: Express) {
 
       res.redirect(302, "/");
     } catch (error) {
-      console.error("[OAuth] Callback failed", error);
+      logger.error("[OAuth] Callback failed", { error });
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });

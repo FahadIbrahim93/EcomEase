@@ -313,13 +313,15 @@ export default function Posts() {
                       <div className="flex gap-2 mt-3">
                         {(() => {
                           try {
-                            const platformsStr = typeof post.platforms === 'string' ? post.platforms : '[]';
-                            const platforms: any[] = JSON.parse(platformsStr) as any[];
-                            return platforms.map((platform: any, idx: number) => (
+                            const platforms = Array.isArray(post.platforms)
+                              ? post.platforms
+                              : JSON.parse(typeof post.platforms === 'string' ? post.platforms : '[]');
+
+                            return (platforms as string[]).map((platform, idx) => (
                               <Badge key={idx} variant="secondary" className="capitalize">
                                 {platform === "facebook" && <Facebook className="h-3 w-3 mr-1" />}
                                 {platform === "instagram" && <Instagram className="h-3 w-3 mr-1" />}
-                                {String(platform)}
+                                {platform}
                               </Badge>
                             ));
                           } catch {

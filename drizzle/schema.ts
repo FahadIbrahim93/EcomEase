@@ -1,18 +1,11 @@
-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, index } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -42,7 +35,9 @@ export const socialConnections = mysqlTable("socialConnections", {
   isConnected: boolean("isConnected").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("social_user_id_idx").on(table.userId),
+}));
 
 export type SocialConnection = typeof socialConnections.$inferSelect;
 export type InsertSocialConnection = typeof socialConnections.$inferInsert;
@@ -63,7 +58,10 @@ export const products = mysqlTable("products", {
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("product_user_id_idx").on(table.userId),
+  categoryIdx: index("product_category_idx").on(table.category),
+}));
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
@@ -73,18 +71,21 @@ export const posts = mysqlTable("posts", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   caption: text("caption"),
-  hashtags: text("hashtags"), // Comma-separated or JSON array
-  mediaUrls: json("mediaUrls"), // Array of image/video URLs
+  hashtags: text("hashtags"),
+  mediaUrls: json("mediaUrls"),
   mediaType: mysqlEnum("mediaType", ["image", "video", "carousel"]).notNull(),
-  platforms: json("platforms"), // Array of platform names
+  platforms: json("platforms"),
   status: mysqlEnum("status", ["draft", "scheduled", "published", "failed"]).default("draft").notNull(),
   scheduledAt: timestamp("scheduledAt"),
   publishedAt: timestamp("publishedAt"),
-  platformPostIds: json("platformPostIds"), // Map of platform -> post ID
-  engagement: json("engagement"), // Likes, comments, shares per platform
+  platformPostIds: json("platformPostIds"),
+  engagement: json("engagement"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("post_user_id_idx").on(table.userId),
+  statusIdx: index("post_status_idx").on(table.status),
+}));
 
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = typeof posts.$inferInsert;
@@ -100,17 +101,36 @@ export const orders = mysqlTable("orders", {
   customerPhone: varchar("customerPhone", { length: 20 }),
   customerEmail: varchar("customerEmail", { length: 320 }),
   shippingAddress: text("shippingAddress"),
-  items: json("items"), // Array of {productId, quantity, price}
+  items: json("items"), // Still here for backward compat during migration or simple use
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
   status: mysqlEnum("status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]).default("pending").notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("order_user_id_idx").on(table.userId),
+  statusIdx: index("order_status_idx").on(table.status),
+  platformIdx: index("order_platform_idx").on(table.platform),
+}));
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
+
+// Order Items (New for performance and normalized structure)
+export const orderItems = mysqlTable("orderItems", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  productId: int("productId").notNull(),
+  quantity: int("quantity").notNull(),
+  priceAtPurchase: decimal("priceAtPurchase", { precision: 10, scale: 2 }).notNull(),
+}, (table) => ({
+  orderIdIdx: index("item_order_id_idx").on(table.orderId),
+  productIdIdx: index("item_product_id_idx").on(table.productId),
+}));
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;
 
 // Invoices
 export const invoices = mysqlTable("invoices", {
@@ -129,7 +149,10 @@ export const invoices = mysqlTable("invoices", {
   status: mysqlEnum("status", ["draft", "sent", "viewed", "paid", "overdue"]).default("draft").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("invoice_user_id_idx").on(table.userId),
+  orderIdIdx: index("invoice_order_id_idx").on(table.orderId),
+}));
 
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = typeof invoices.$inferInsert;
@@ -138,13 +161,16 @@ export type InsertInvoice = typeof invoices.$inferInsert;
 export const activityLog = mysqlTable("activityLog", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  action: varchar("action", { length: 100 }).notNull(), // e.g., "post_created", "order_received", "stock_updated"
-  entityType: varchar("entityType", { length: 50 }).notNull(), // e.g., "post", "order", "product"
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entityType", { length: 50 }).notNull(),
   entityId: int("entityId"),
   description: text("description"),
-  metadata: json("metadata"), // Additional context
+  metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("activity_user_id_idx").on(table.userId),
+  entityIdx: index("activity_entity_idx").on(table.entityType, table.entityId),
+}));
 
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type InsertActivityLog = typeof activityLog.$inferInsert;
@@ -160,7 +186,49 @@ export const analytics = mysqlTable("analytics", {
   postsCount: int("postsCount").default(0).notNull(),
   totalEngagement: int("totalEngagement").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("analytics_user_id_idx").on(table.userId),
+  dateIdx: index("analytics_date_idx").on(table.date),
+}));
 
 export type Analytics = typeof analytics.$inferSelect;
 export type InsertAnalytics = typeof analytics.$inferInsert;
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  socialConnections: many(socialConnections),
+  products: many(products),
+  posts: many(posts),
+  orders: many(orders),
+  invoices: many(invoices),
+  activityLogs: many(activityLog),
+  analytics: many(analytics),
+}));
+
+export const socialConnectionsRelations = relations(socialConnections, ({ one }) => ({
+  user: one(users, { fields: [socialConnections.userId], references: [users.id] }),
+}));
+
+export const productsRelations = relations(products, ({ one }) => ({
+  user: one(users, { fields: [products.userId], references: [users.id] }),
+}));
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  user: one(users, { fields: [posts.userId], references: [users.id] }),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  user: one(users, { fields: [orders.userId], references: [users.id] }),
+  items: many(orderItems),
+  invoice: one(invoices, { fields: [orders.id], references: [invoices.orderId] }),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  product: one(products, { fields: [orderItems.productId], references: [products.id] }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  user: one(users, { fields: [invoices.userId], references: [users.id] }),
+  order: one(orders, { fields: [invoices.orderId], references: [orders.id] }),
+}));

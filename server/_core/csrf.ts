@@ -2,8 +2,10 @@ import { randomBytes } from "crypto";
 import { Response, Request } from "express";
 import { parse as parseCookies } from "cookie";
 
-const CSRF_HEADER_NAME = "X-CSRF-Token";
-const CSRF_COOKIE_NAME = "__Host-csrf";
+export const CSRF_HEADER_NAME = "X-CSRF-Token";
+// __Host- prefix requires Secure attribute, which requires HTTPS.
+// In development, we use a standard name to avoid browser rejection on HTTP.
+export const CSRF_COOKIE_NAME = process.env.NODE_ENV === "production" ? "__Host-csrf" : "csrf_token";
 
 /**
  * Generate a random CSRF token

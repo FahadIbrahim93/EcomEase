@@ -23,35 +23,16 @@ export default function Dashboard() {
   const stats = statsQuery.data;
   const activities = activityQuery.data || [];
 
-  const getActivityIcon = (action: string) => {
-    switch (action) {
-      case "post_created":
-        return "📝";
-      case "post_published":
-        return "📤";
-      case "order_received":
-        return "📦";
-      case "order_status_updated":
-        return "✅";
-      case "stock_updated":
-        return "📊";
-      default:
-        return "📌";
-    }
+  const activityConfig: Record<string, { icon: string; color: string }> = {
+    post_created: { icon: "📝", color: "bg-gray-50 border-gray-200" },
+    post_published: { icon: "📤", color: "bg-green-50 border-green-200" },
+    order_received: { icon: "📦", color: "bg-blue-50 border-blue-200" },
+    order_status_updated: { icon: "✅", color: "bg-gray-50 border-gray-200" },
+    stock_updated: { icon: "📊", color: "bg-yellow-50 border-yellow-200" },
   };
 
-  const getActivityColor = (action: string) => {
-    switch (action) {
-      case "post_published":
-        return "bg-green-50 border-green-200";
-      case "order_received":
-        return "bg-blue-50 border-blue-200";
-      case "stock_updated":
-        return "bg-yellow-50 border-yellow-200";
-      default:
-        return "bg-gray-50 border-gray-200";
-    }
-  };
+  const getActivityConfig = (action: string) =>
+    activityConfig[action] || { icon: "📌", color: "bg-gray-50 border-gray-200" };
 
   return (
     <DashboardLayout>
@@ -159,9 +140,7 @@ export default function Dashboard() {
             <MessageSquare className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Create Post</div>
-              <div className="text-xs text-muted-foreground">
-                Post to all platforms
-              </div>
+              <div className="text-xs text-muted-foreground">Post to all platforms</div>
             </div>
           </Button>
 
@@ -170,12 +149,10 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/inventory")}
           >
-              <Package className="mr-3 h-5 w-5" aria-hidden="true" />
+            <Package className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Manage Inventory</div>
-              <div className="text-xs text-muted-foreground">
-                View and update products
-              </div>
+              <div className="text-xs text-muted-foreground">View and update products</div>
             </div>
           </Button>
 
@@ -184,12 +161,10 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/orders")}
           >
-              <ShoppingCart className="mr-3 h-5 w-5" aria-hidden="true" />
+            <ShoppingCart className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Check Orders</div>
-              <div className="text-xs text-muted-foreground">
-                View incoming orders
-              </div>
+              <div className="text-xs text-muted-foreground">View incoming orders</div>
             </div>
           </Button>
 
@@ -198,12 +173,10 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/analytics")}
           >
-              <Eye className="mr-3 h-5 w-5" aria-hidden="true" />
+            <Eye className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">View Analytics</div>
-              <div className="text-xs text-muted-foreground">
-                Sales and performance
-              </div>
+              <div className="text-xs text-muted-foreground">Sales and performance</div>
             </div>
           </Button>
         </div>
@@ -226,29 +199,30 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {activities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className={`p-4 rounded-lg border-l-4 border-l-primary ${getActivityColor(
-                      activity.action
-                    )}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <span className="text-xl">
-                          {getActivityIcon(activity.action)}
-                        </span>
-                        <div>
-                          <p className="font-medium">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(activity.createdAt).toLocaleString()}
-                          </p>
+                {activities.map((activity) => {
+                  const { icon, color } = getActivityConfig(activity.action);
+                  return (
+                    <div
+                      key={activity.id}
+                      className={`p-4 rounded-lg border-l-4 border-l-primary ${color}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xl" role="img" aria-label={activity.action}>
+                            {icon}
+                          </span>
+                          <div>
+                            <p className="font-medium">{activity.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(activity.createdAt).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
+                        <Badge variant="outline">{activity.action}</Badge>
                       </div>
-                      <Badge variant="outline">{activity.action}</Badge>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
