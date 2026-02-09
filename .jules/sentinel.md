@@ -1,0 +1,4 @@
+## 2025-05-15 - [CSRF Bypass via Inconsistent Procedure Inheritance]
+**Vulnerability:** `protectedProcedure` and `adminProcedure` were bypassing CSRF protection because they were built directly from `t.procedure` instead of inheriting from `publicProcedure` which contained the `csrfMiddleware`.
+**Learning:** tRPC procedures don't automatically inherit middlewares from each other unless explicitly chained (e.g., `p2 = p1.use(mw)`). Defining procedures independently can lead to missing security layers.
+**Prevention:** Always use a base `publicProcedure` (or a dedicated `baseProcedure`) that includes global security middlewares (CSRF, Rate Limiting, etc.) and build all other procedures on top of it. Use "Defense in Depth" by chaining auth procedures: `adminProcedure = protectedProcedure.use(...)`.

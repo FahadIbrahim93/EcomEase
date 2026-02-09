@@ -11,7 +11,7 @@ import { invokeLLM } from "./_core/llm";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function createAuthContext(): { ctx: TrpcContext } {
+function createAuthContext(withCsrf = true): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-user",
@@ -24,11 +24,17 @@ function createAuthContext(): { ctx: TrpcContext } {
     lastSignedIn: new Date(),
   };
 
+  const headers: Record<string, string> = {};
+  if (withCsrf) {
+    headers["x-csrf-token"] = "test-token";
+    headers["cookie"] = "__Host-csrf=test-token";
+  }
+
   const ctx: TrpcContext = {
     user,
     req: {
       protocol: "https",
-      headers: {},
+      headers,
     } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
@@ -39,6 +45,15 @@ function createAuthContext(): { ctx: TrpcContext } {
 describe("products.generateDescription", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("should fail without CSRF token", async () => {
+    const { ctx } = createAuthContext(false);
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.products.generateDescription({
+      name: "Gold Necklace",
+    })).rejects.toThrow(/CSRF token mismatch or missing/);
   });
 
   it("should generate a product description using LLM", async () => {
