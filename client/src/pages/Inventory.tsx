@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import type { Product } from "../../../drizzle/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -44,6 +55,7 @@ export default function Inventory() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -109,15 +121,21 @@ export default function Inventory() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure?")) {
-      try {
-        await deleteProductMutation.mutateAsync({ id });
-        toast.success("Product deleted!");
-        productsQuery.refetch();
-      } catch (error) {
-        toast.error("Failed to delete product");
-      }
+  const handleDelete = (product: Product) => {
+    setProductToDelete(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await deleteProductMutation.mutateAsync({ id: productToDelete.id });
+      toast.success("Product deleted!");
+      productsQuery.refetch();
+    } catch (error) {
+      toast.error("Failed to delete product");
+    } finally {
+      setProductToDelete(null);
     }
   };
 
@@ -428,14 +446,16 @@ export default function Inventory() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleOpenDialog(product)}
+                              aria-label={`Edit ${product.name}`}
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleDelete(product.id)}
+                              onClick={() => handleDelete(product)}
                               disabled={deleteProductMutation.isPending}
+                              aria-label={`Delete ${product.name}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -449,6 +469,33 @@ export default function Inventory() {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the product <strong>{productToDelete?.name}</strong>.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteProductMutation.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  confirmDelete();
+                }}
+                disabled={deleteProductMutation.isPending}
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
+                {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
