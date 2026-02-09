@@ -11,20 +11,19 @@ import {
   orders,
   invoices,
   activityLog,
-  analytics
+  analytics,
+  orderItems
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // In production, drizzle(connectionString) with mysql2 uses a connection pool by default.
       _db = drizzle(process.env.DATABASE_URL);
     } catch (error) {
-      logger.warn("[Database] Failed to connect", { error });
+      logger.error("[Database] Failed to connect", { error });
       _db = null;
     }
   }
@@ -34,23 +33,22 @@ export async function getDb() {
 export async function ensureDb() {
   const db = await getDb();
   if (!db) {
-    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database not available"
+    });
   }
   return db;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) throw new Error("User openId is required for upsert");
+  if (!user.openId) throw new Error("User openId is required");
 
-  const db = await getDb();
-  if (!db) {
-    logger.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
+  const db = await ensureDb();
 
   try {
     const { openId, ...rest } = user;
-    const role = user.role ?? (openId === ENV.ownerOpenId ? "admin" : undefined);
+    const role = user.role ?? (openId === ENV.ownerOpenId ? "admin" : "user");
     const lastSignedIn = user.lastSignedIn ?? new Date();
 
     const values = {
@@ -60,53 +58,40 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       lastSignedIn,
     };
 
-    const updateSet = {
-      ...rest,
-      role,
-      lastSignedIn,
-    };
-
     await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet as any,
+      set: {
+        name: rest.name ?? null,
+        email: rest.email ?? null,
+        loginMethod: rest.loginMethod ?? null,
+        role,
+        lastSignedIn
+      },
     });
   } catch (error) {
-    logger.error("[Database] Failed to upsert user", { error });
+    logger.error("[Database] Upsert user failed", { openId: user.openId, error });
     throw error;
   }
 }
 
 export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    logger.warn("[Database] Cannot get user by openId: database not available");
-    return undefined;
-  }
-
+  const db = await ensureDb();
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  return result[0];
 }
 
 export async function getUserById(userId: number) {
-  const db = await getDb();
-  if (!db) {
-    logger.warn("[Database] Cannot get user by id: database not available");
-    return undefined;
-  }
-
+  const db = await ensureDb();
   const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  return result[0];
 }
 
-// Social Connections
 export async function getSocialConnections(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
+  const db = await ensureDb();
   return db.select().from(socialConnections).where(eq(socialConnections.userId, userId));
 }
 
 export async function getSocialConnection(userId: number, platform: "facebook" | "instagram" | "tiktok") {
-  const db = await getDb();
-  if (!db) return undefined;
+  const db = await ensureDb();
   const result = await db
     .select()
     .from(socialConnections)
@@ -120,25 +105,16 @@ export async function getSocialConnection(userId: number, platform: "facebook" |
   return result[0];
 }
 
-// Products
 export async function getProducts(userId: number, options?: { limit?: number; offset?: number }) {
   const db = await ensureDb();
-
-  let query = db.select().from(products).where(eq(products.userId, userId));
-
-  if (options?.limit !== undefined) {
-    query = query.limit(options.limit) as any;
-  }
-  if (options?.offset !== undefined) {
-    query = query.offset(options.offset) as any;
-  }
-
+  let query = db.select().from(products).where(eq(products.userId, userId)).$dynamic();
+  if (options?.limit) query = query.limit(options.limit);
+  if (options?.offset) query = query.offset(options.offset);
   return query;
 }
 
 export async function getProduct(userId: number, productId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
+  const db = await ensureDb();
   const result = await db
     .select()
     .from(products)
@@ -147,26 +123,16 @@ export async function getProduct(userId: number, productId: number) {
   return result[0];
 }
 
-// Posts
 export async function getPosts(userId: number, options?: { limit?: number; offset?: number }) {
-  const db = await getDb();
-  if (!db) return [];
-
-  let query = db.select().from(posts).where(eq(posts.userId, userId)).orderBy(desc(posts.createdAt));
-
-  if (options?.limit !== undefined) {
-    query = query.limit(options.limit) as any;
-  }
-  if (options?.offset !== undefined) {
-    query = query.offset(options.offset) as any;
-  }
-
+  const db = await ensureDb();
+  let query = db.select().from(posts).where(eq(posts.userId, userId)).orderBy(desc(posts.createdAt)).$dynamic();
+  if (options?.limit) query = query.limit(options.limit);
+  if (options?.offset) query = query.offset(options.offset);
   return query;
 }
 
 export async function getPost(userId: number, postId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
+  const db = await ensureDb();
   const result = await db
     .select()
     .from(posts)
@@ -175,33 +141,22 @@ export async function getPost(userId: number, postId: number) {
   return result[0];
 }
 
-// Orders
 export async function getOrders(userId: number, options?: { limit?: number; offset?: number; status?: string }) {
   const db = await ensureDb();
-
   const conditions = [eq(orders.userId, userId)];
   if (options?.status) {
+    // Correct way to cast enum string for Drizzle
     conditions.push(eq(orders.status, options.status as any));
   }
 
-  let query = db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
-
-  if (options?.limit !== undefined) {
-    query = query.limit(options.limit) as any;
-  }
-  if (options?.offset !== undefined) {
-    query = query.offset(options.offset) as any;
-  }
-
+  let query = db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt)).$dynamic();
+  if (options?.limit) query = query.limit(options.limit);
+  if (options?.offset) query = query.offset(options.offset);
   return query;
 }
 
 export async function getOrder(userId: number, orderId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  // Use query API for cleaner relation fetching if needed,
-  // but sticking to select() for consistency with the rest of the file
+  const db = await ensureDb();
   const result = await db
     .select()
     .from(orders)
@@ -210,36 +165,20 @@ export async function getOrder(userId: number, orderId: number) {
 
   if (result.length === 0) return undefined;
   const order = result[0];
-
-  // Fetch items for this order
-  const items = await db
-    .select()
-    .from(orderItems)
-    .where(eq(orderItems.orderId, order.id));
-
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
   return { ...order, items };
 }
 
-// Invoices
 export async function getInvoices(userId: number, options?: { limit?: number; offset?: number }) {
-  const db = await getDb();
-  if (!db) return [];
-
-  let query = db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
-
-  if (options?.limit !== undefined) {
-    query = query.limit(options.limit) as any;
-  }
-  if (options?.offset !== undefined) {
-    query = query.offset(options.offset) as any;
-  }
-
+  const db = await ensureDb();
+  let query = db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt)).$dynamic();
+  if (options?.limit) query = query.limit(options.limit);
+  if (options?.offset) query = query.offset(options.offset);
   return query;
 }
 
 export async function getInvoice(userId: number, invoiceId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
+  const db = await ensureDb();
   const result = await db
     .select()
     .from(invoices)
@@ -248,10 +187,8 @@ export async function getInvoice(userId: number, invoiceId: number) {
   return result[0];
 }
 
-// Activity Log
 export async function getActivityLog(userId: number, limit = 50) {
-  const db = await getDb();
-  if (!db) return [];
+  const db = await ensureDb();
   return db
     .select()
     .from(activityLog)
@@ -260,10 +197,8 @@ export async function getActivityLog(userId: number, limit = 50) {
     .limit(limit);
 }
 
-// Analytics
 export async function getAnalytics(userId: number, days = 30) {
-  const db = await getDb();
-  if (!db) return [];
+  const db = await ensureDb();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   return db
@@ -273,11 +208,8 @@ export async function getAnalytics(userId: number, days = 30) {
     .orderBy(analytics.date);
 }
 
-// Platform Stats
 export async function getPlatformStats(userId: number) {
-  const db = await getDb();
-  if (!db) return { facebook: { orders: 0, revenue: 0 }, instagram: { orders: 0, revenue: 0 }, tiktok: { orders: 0, revenue: 0 } };
-
+  const db = await ensureDb();
   const result = await db
     .select({
       platform: orders.platform,
@@ -304,37 +236,29 @@ export async function getPlatformStats(userId: number) {
   return stats;
 }
 
-// Dashboard Stats
 export async function getDashboardStats(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
+  const db = await ensureDb();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const statsResult = await db
-    .select({
+  const [productStats, orderStats] = await Promise.all([
+    db.select({
       totalProducts: count(products.id),
       lowStockCount: count(sql`CASE WHEN ${products.stockQuantity} <= ${products.lowStockThreshold} THEN 1 END`),
-    })
-    .from(products)
-    .where(eq(products.userId, userId));
-
-  const ordersStatsResult = await db
-    .select({
+    }).from(products).where(eq(products.userId, userId)),
+    db.select({
       todayOrdersCount: count(orders.id),
       todayRevenue: sum(orders.totalAmount),
-    })
-    .from(orders)
-    .where(and(eq(orders.userId, userId), gte(orders.createdAt, today)));
+    }).from(orders).where(and(eq(orders.userId, userId), gte(orders.createdAt, today)))
+  ]);
 
-  const productStats = statsResult[0] || { totalProducts: 0, lowStockCount: 0 };
-  const orderStats = ordersStatsResult[0] || { todayOrdersCount: 0, todayRevenue: null };
+  const p = productStats[0] || { totalProducts: 0, lowStockCount: 0 };
+  const o = orderStats[0] || { todayOrdersCount: 0, todayRevenue: null };
 
   return {
-    totalProducts: productStats.totalProducts,
-    lowStockCount: productStats.lowStockCount,
-    todayOrders: orderStats.todayOrdersCount,
-    todayRevenue: orderStats.todayRevenue ? parseFloat(orderStats.todayRevenue.toString()) : 0,
+    totalProducts: p.totalProducts,
+    lowStockCount: p.lowStockCount,
+    todayOrders: o.todayOrdersCount,
+    todayRevenue: o.todayRevenue ? parseFloat(o.todayRevenue.toString()) : 0,
   };
 }

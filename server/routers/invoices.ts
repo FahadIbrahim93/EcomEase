@@ -75,4 +75,56 @@ export const invoicesRouter = router({
 
       return { success: true };
     }),
+
+  download: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const invoice = await getInvoice(ctx.user.id, input.id);
+      if (!invoice) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found" });
+
+      const order = await getOrder(ctx.user.id, invoice.orderId);
+
+      // Generate a simple HTML invoice representation
+      const html = `
+        <html>
+          <body style="font-family: sans-serif; padding: 40px;">
+            <h1>Invoice ${invoice.invoiceNumber}</h1>
+            <p>Date: ${invoice.invoiceDate.toLocaleDateString()}</p>
+            <hr/>
+            <p>Customer: ${order?.customerName}</p>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <th style="text-align: left; padding: 10px;">Item</th>
+                  <th style="text-align: right; padding: 10px;">Qty</th>
+                  <th style="text-align: right; padding: 10px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order?.items?.map((item: any) => `
+                  <tr>
+                    <td style="padding: 10px;">Product #${item.productId}</td>
+                    <td style="text-align: right; padding: 10px;">${item.quantity}</td>
+                    <td style="text-align: right; padding: 10px;">$${item.priceAtPurchase}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <hr/>
+            <div style="text-align: right;">
+              <p>Subtotal: $${invoice.subtotal}</p>
+              <p>Tax: $${invoice.tax}</p>
+              <p>Discount: $${invoice.discount}</p>
+              <h2 style="color: #2563eb;">Total: $${invoice.total}</h2>
+            </div>
+          </body>
+        </html>
+      `;
+
+      return {
+        filename: `invoice-${invoice.invoiceNumber}.html`,
+        content: Buffer.from(html).toString('base64'),
+        contentType: 'text/html'
+      };
+    }),
 });

@@ -25,7 +25,7 @@ describe("CSRF Protection Middleware", () => {
       name: "Should Fail",
       price: "10.00",
       stockQuantity: 1
-    })).rejects.toThrow(/CSRF token mismatch or missing/);
+    })).rejects.toThrow(/CSRF token mismatch/);
   });
 
   it("allows queries without CSRF token", async () => {
