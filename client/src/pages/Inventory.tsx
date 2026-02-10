@@ -33,6 +33,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Inventory() {
   const productsQuery = trpc.products.list.useQuery();
@@ -172,8 +177,10 @@ export default function Inventory() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Product Name *</Label>
+                    <Label htmlFor="product-name">Product Name *</Label>
                     <Input
+                      id="product-name"
+                      autoFocus
                       placeholder="e.g., Gold Necklace"
                       value={formData.name}
                       onChange={(e) =>
@@ -183,8 +190,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>SKU</Label>
+                    <Label htmlFor="product-sku">SKU</Label>
                     <Input
+                      id="product-sku"
                       placeholder="e.g., GN-001"
                       value={formData.sku}
                       onChange={(e) =>
@@ -197,43 +205,55 @@ export default function Inventory() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Description</Label>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          const result = await generateDescriptionMutation.mutateAsync({
-                            name: formData.name,
-                            category: formData.category,
-                            price: formData.price,
-                            sku: formData.sku,
-                            existingDescription: formData.description,
-                          });
-                          if (result.success) {
-                            setFormData({ ...formData, description: result.description });
-                            toast.success("Description generated!");
-                          }
-                        } catch (error) {
-                          toast.error("Failed to generate description");
-                        }
-                      }}
-                      disabled={!formData.name || generateDescriptionMutation.isPending}
-                    >
-                      {generateDescriptionMutation.isPending ? (
-                        <>
-                          <Loader className="mr-2 h-3 w-3 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="mr-2 h-3 w-3" />
-                          AI Generate
-                        </>
-                      )}
-                    </Button>
+                    <Label htmlFor="product-description">Description</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              try {
+                                const result = await generateDescriptionMutation.mutateAsync({
+                                  name: formData.name,
+                                  category: formData.category,
+                                  price: formData.price,
+                                  sku: formData.sku,
+                                  existingDescription: formData.description,
+                                });
+                                if (result.success) {
+                                  setFormData({ ...formData, description: result.description });
+                                  toast.success("Description generated!");
+                                }
+                              } catch (error) {
+                                toast.error("Failed to generate description");
+                              }
+                            }}
+                            disabled={!formData.name || generateDescriptionMutation.isPending}
+                          >
+                            {generateDescriptionMutation.isPending ? (
+                              <>
+                                <Loader className="mr-2 h-3 w-3 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="mr-2 h-3 w-3" />
+                                AI Generate
+                              </>
+                            )}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {!formData.name
+                          ? "Enter a product name to use AI generation"
+                          : "Generate product description using AI"}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   <Input
+                    id="product-description"
                     placeholder="Product description"
                     value={formData.description}
                     onChange={(e) =>
@@ -245,8 +265,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Category</Label>
+                    <Label htmlFor="product-category">Category</Label>
                     <Input
+                      id="product-category"
                       placeholder="e.g., Jewelry"
                       value={formData.category}
                       onChange={(e) =>
@@ -256,8 +277,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Price *</Label>
+                    <Label htmlFor="product-price">Price *</Label>
                     <Input
+                      id="product-price"
                       placeholder="৳ 1500"
                       type="number"
                       value={formData.price}
@@ -271,8 +293,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Cost Price</Label>
+                    <Label htmlFor="product-cost-price">Cost Price</Label>
                     <Input
+                      id="product-cost-price"
                       placeholder="৳ 800"
                       type="number"
                       value={formData.costPrice}
@@ -283,8 +306,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Stock Quantity</Label>
+                    <Label htmlFor="product-stock">Stock Quantity</Label>
                     <Input
+                      id="product-stock"
                       placeholder="0"
                       type="number"
                       value={formData.stockQuantity}
@@ -300,8 +324,9 @@ export default function Inventory() {
                 </div>
 
                 <div>
-                  <Label>Low Stock Threshold</Label>
+                  <Label htmlFor="product-threshold">Low Stock Threshold</Label>
                   <Input
+                    id="product-threshold"
                     placeholder="5"
                     type="number"
                     value={formData.lowStockThreshold}
@@ -424,21 +449,36 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenDialog(product)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(product.id)}
-                              disabled={deleteProductMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenDialog(product)}
+                                  aria-label={`Edit ${product.name}`}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit product</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(product.id)}
+                                    disabled={deleteProductMutation.isPending}
+                                    aria-label={`Delete ${product.name}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete product</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
