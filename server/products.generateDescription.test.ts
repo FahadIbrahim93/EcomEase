@@ -28,7 +28,10 @@ function createAuthContext(): { ctx: TrpcContext } {
     user,
     req: {
       protocol: "https",
-      headers: {},
+      headers: {
+        "x-csrf-token": "test-token",
+        "cookie": "__Host-csrf=test-token",
+      },
     } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
