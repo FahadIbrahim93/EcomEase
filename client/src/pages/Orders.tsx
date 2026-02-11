@@ -82,7 +82,7 @@ export default function Orders() {
   const filteredOrders =
     statusFilter === "all"
       ? orders
-      : orders.filter((o) => o.status === statusFilter);
+      : orders.filter(o => o.status === statusFilter);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -168,7 +168,7 @@ export default function Orders() {
           <CardContent>
             {ordersQuery.isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
@@ -192,7 +192,7 @@ export default function Orders() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOrders.map((order) => (
+                    {filteredOrders.map(order => (
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">
                           #{order.orderNumber}
@@ -218,7 +218,7 @@ export default function Orders() {
                             {getStatusIcon(order.status)}
                             <Select
                               value={order.status}
-                              onValueChange={(value) =>
+                              onValueChange={value =>
                                 handleStatusChange(order.id, value)
                               }
                             >
@@ -297,8 +297,13 @@ export default function Orders() {
                                     <div className="space-y-2">
                                       {(() => {
                                         try {
-                                          const itemsStr = typeof order.items === 'string' ? order.items : '[]';
-                                          const items = JSON.parse(itemsStr) as any[];
+                                          const itemsStr =
+                                            typeof order.items === "string"
+                                              ? order.items
+                                              : "[]";
+                                          const items = JSON.parse(
+                                            itemsStr
+                                          ) as any[];
                                           return items.map((item, idx) => (
                                             <div
                                               key={idx}
@@ -328,13 +333,9 @@ export default function Orders() {
                                     </div>
                                   </div>
                                   <Button
-                                    onClick={() =>
-                                      handleGenerateInvoice(order)
-                                    }
+                                    onClick={() => handleGenerateInvoice(order)}
                                     className="w-full"
-                                    disabled={
-                                      createInvoiceMutation.isPending
-                                    }
+                                    disabled={createInvoiceMutation.isPending}
                                   >
                                     <FileText className="mr-2 h-4 w-4" />
                                     Generate Invoice

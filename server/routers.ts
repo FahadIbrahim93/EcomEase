@@ -42,7 +42,7 @@ import {
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
+    me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -70,7 +70,9 @@ export const appRouter = router({
     }),
 
     getConnection: protectedProcedure
-      .input(z.object({ platform: z.enum(["facebook", "instagram", "tiktok"]) }))
+      .input(
+        z.object({ platform: z.enum(["facebook", "instagram", "tiktok"]) })
+      )
       .query(async ({ ctx, input }) => {
         return getSocialConnection(ctx.user.id, input.platform);
       }),
@@ -115,7 +117,9 @@ export const appRouter = router({
       }),
 
     disconnectAccount: protectedProcedure
-      .input(z.object({ platform: z.enum(["facebook", "instagram", "tiktok"]) }))
+      .input(
+        z.object({ platform: z.enum(["facebook", "instagram", "tiktok"]) })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await ensureDb();
 
@@ -198,21 +202,33 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+        if (!product)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Product not found",
+          });
 
         const updateData: any = { updatedAt: new Date() };
         if (input.name !== undefined) updateData.name = input.name;
-        if (input.description !== undefined) updateData.description = input.description;
+        if (input.description !== undefined)
+          updateData.description = input.description;
         if (input.price !== undefined) updateData.price = input.price;
-        if (input.costPrice !== undefined) updateData.costPrice = input.costPrice;
-        if (input.stockQuantity !== undefined) updateData.stockQuantity = input.stockQuantity;
-        if (input.lowStockThreshold !== undefined) updateData.lowStockThreshold = input.lowStockThreshold;
+        if (input.costPrice !== undefined)
+          updateData.costPrice = input.costPrice;
+        if (input.stockQuantity !== undefined)
+          updateData.stockQuantity = input.stockQuantity;
+        if (input.lowStockThreshold !== undefined)
+          updateData.lowStockThreshold = input.lowStockThreshold;
         if (input.sku !== undefined) updateData.sku = input.sku;
         if (input.category !== undefined) updateData.category = input.category;
-        if (input.images !== undefined) updateData.images = JSON.stringify(input.images);
+        if (input.images !== undefined)
+          updateData.images = JSON.stringify(input.images);
         if (input.isActive !== undefined) updateData.isActive = input.isActive;
 
-        await db.update(products).set(updateData).where(eq(products.id, input.id));
+        await db
+          .update(products)
+          .set(updateData)
+          .where(eq(products.id, input.id));
 
         return { success: true };
       }),
@@ -223,7 +239,11 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+        if (!product)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Product not found",
+          });
 
         await db.delete(products).where(eq(products.id, input.id));
 
@@ -236,9 +256,16 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const product = await getProduct(ctx.user.id, input.id);
-        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+        if (!product)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Product not found",
+          });
 
-        const newQuantity = Math.max(0, product.stockQuantity + input.adjustment);
+        const newQuantity = Math.max(
+          0,
+          product.stockQuantity + input.adjustment
+        );
         await db
           .update(products)
           .set({ stockQuantity: newQuantity, updatedAt: new Date() })
@@ -265,7 +292,8 @@ export const appRouter = router({
             messages: [
               {
                 role: "system",
-                content: "You are an expert e-commerce copywriter. Create compelling product descriptions that drive conversions.",
+                content:
+                  "You are an expert e-commerce copywriter. Create compelling product descriptions that drive conversions.",
               },
               {
                 role: "user",
@@ -275,11 +303,15 @@ export const appRouter = router({
           });
 
           const description =
-            response.choices[0]?.message?.content || "Unable to generate description";
+            response.choices[0]?.message?.content ||
+            "Unable to generate description";
 
           return {
             success: true,
-            description: typeof description === "string" ? description : JSON.stringify(description),
+            description:
+              typeof description === "string"
+                ? description
+                : JSON.stringify(description),
           };
         } catch (error) {
           console.error("AI description generation error:", error);
@@ -344,7 +376,8 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const post = await getPost(ctx.user.id, input.id);
-        if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
+        if (!post)
+          throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
 
         await db
           .update(posts)
@@ -372,7 +405,8 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const post = await getPost(ctx.user.id, input.id);
-        if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
+        if (!post)
+          throw new TRPCError({ code: "NOT_FOUND", message: "Post not found" });
 
         await db.delete(posts).where(eq(posts.id, input.id));
 
@@ -385,13 +419,22 @@ export const appRouter = router({
     list: protectedProcedure
       .input(
         z.object({
-          status: z.enum(["pending", "paid", "processing", "shipped", "delivered", "cancelled"]).optional(),
+          status: z
+            .enum([
+              "pending",
+              "paid",
+              "processing",
+              "shipped",
+              "delivered",
+              "cancelled",
+            ])
+            .optional(),
         })
       )
       .query(async ({ ctx, input }) => {
         const allOrders = await getOrders(ctx.user.id);
         if (input.status) {
-          return allOrders.filter((o) => o.status === input.status);
+          return allOrders.filter(o => o.status === input.status);
         }
         return allOrders;
       }),
@@ -458,14 +501,25 @@ export const appRouter = router({
       .input(
         z.object({
           id: z.number(),
-          status: z.enum(["pending", "paid", "processing", "shipped", "delivered", "cancelled"]),
+          status: z.enum([
+            "pending",
+            "paid",
+            "processing",
+            "shipped",
+            "delivered",
+            "cancelled",
+          ]),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const db = await ensureDb();
 
         const order = await getOrder(ctx.user.id, input.id);
-        if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+        if (!order)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Order not found",
+          });
 
         await db
           .update(orders)
@@ -513,7 +567,11 @@ export const appRouter = router({
         const db = await ensureDb();
 
         const order = await getOrder(ctx.user.id, input.orderId);
-        if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+        if (!order)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Order not found",
+          });
 
         const result = await db.insert(invoices).values({
           userId: ctx.user.id,
@@ -532,12 +590,21 @@ export const appRouter = router({
       }),
 
     updateStatus: protectedProcedure
-      .input(z.object({ id: z.number(), status: z.enum(["draft", "sent", "viewed", "paid", "overdue"]) }))
+      .input(
+        z.object({
+          id: z.number(),
+          status: z.enum(["draft", "sent", "viewed", "paid", "overdue"]),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await ensureDb();
 
         const invoice = await getInvoice(ctx.user.id, input.id);
-        if (!invoice) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found" });
+        if (!invoice)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Invoice not found",
+          });
 
         await db
           .update(invoices)

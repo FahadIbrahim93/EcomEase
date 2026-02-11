@@ -75,16 +75,25 @@ export default function Dashboard() {
           {/* Total Products */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <CardTitle className="text-sm font-medium">
+                Total Products
+              </CardTitle>
+              <Package
+                className="h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
-                  <p className="text-xs text-muted-foreground">Active products</p>
+                  <div className="text-2xl font-bold">
+                    {stats?.totalProducts || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Active products
+                  </p>
                 </>
               )}
             </CardContent>
@@ -94,7 +103,10 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
+              <AlertTriangle
+                className="h-4 w-4 text-red-500"
+                aria-hidden="true"
+              />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -104,7 +116,9 @@ export default function Dashboard() {
                   <div className="text-2xl font-bold text-red-600">
                     {stats?.lowStockCount || 0}
                   </div>
-                  <p className="text-xs text-muted-foreground">Need attention</p>
+                  <p className="text-xs text-muted-foreground">
+                    Need attention
+                  </p>
                 </>
               )}
             </CardContent>
@@ -113,15 +127,22 @@ export default function Dashboard() {
           {/* Today's Orders */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-blue-500" aria-hidden="true" />
+              <CardTitle className="text-sm font-medium">
+                Today's Orders
+              </CardTitle>
+              <ShoppingCart
+                className="h-4 w-4 text-blue-500"
+                aria-hidden="true"
+              />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats?.todayOrders || 0}</div>
+                  <div className="text-2xl font-bold">
+                    {stats?.todayOrders || 0}
+                  </div>
                   <p className="text-xs text-muted-foreground">New orders</p>
                 </>
               )}
@@ -131,8 +152,13 @@ export default function Dashboard() {
           {/* Revenue */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-500" aria-hidden="true" />
+              <CardTitle className="text-sm font-medium">
+                Today's Revenue
+              </CardTitle>
+              <TrendingUp
+                className="h-4 w-4 text-green-500"
+                aria-hidden="true"
+              />
             </CardHeader>
             <CardContent>
               {statsQuery.isLoading ? (
@@ -170,7 +196,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/inventory")}
           >
-              <Package className="mr-3 h-5 w-5" aria-hidden="true" />
+            <Package className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Manage Inventory</div>
               <div className="text-xs text-muted-foreground">
@@ -184,7 +210,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/orders")}
           >
-              <ShoppingCart className="mr-3 h-5 w-5" aria-hidden="true" />
+            <ShoppingCart className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">Check Orders</div>
               <div className="text-xs text-muted-foreground">
@@ -198,7 +224,7 @@ export default function Dashboard() {
             className="h-auto py-4 justify-start"
             onClick={() => navigate("/analytics")}
           >
-              <Eye className="mr-3 h-5 w-5" aria-hidden="true" />
+            <Eye className="mr-3 h-5 w-5" aria-hidden="true" />
             <div className="text-left">
               <div className="font-semibold">View Analytics</div>
               <div className="text-xs text-muted-foreground">
@@ -216,7 +242,7 @@ export default function Dashboard() {
           <CardContent>
             {activityQuery.isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
@@ -226,7 +252,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {activities.map((activity) => (
+                {activities.map(activity => (
                   <div
                     key={activity.id}
                     className={`p-4 rounded-lg border-l-4 border-l-primary ${getActivityColor(

@@ -65,7 +65,9 @@ export default function Posts() {
         mediaUrls: formData.mediaUrls,
         mediaType: formData.mediaType,
         platforms: formData.platforms as any,
-        scheduledAt: formData.scheduledAt ? new Date(formData.scheduledAt) : undefined,
+        scheduledAt: formData.scheduledAt
+          ? new Date(formData.scheduledAt)
+          : undefined,
       });
 
       toast.success("Post created successfully!");
@@ -154,7 +156,7 @@ export default function Posts() {
                   <Textarea
                     placeholder="Write your post caption..."
                     value={formData.caption}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData({ ...formData, caption: e.target.value })
                     }
                     className="mt-2"
@@ -168,7 +170,7 @@ export default function Posts() {
                   <Input
                     placeholder="#shopease #fashion #sale"
                     value={formData.hashtags}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData({ ...formData, hashtags: e.target.value })
                     }
                     className="mt-2"
@@ -180,7 +182,7 @@ export default function Posts() {
                   <Label>Media Type</Label>
                   <Select
                     value={formData.mediaType}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setFormData({
                         ...formData,
                         mediaType: value as "image" | "video" | "carousel",
@@ -215,12 +217,15 @@ export default function Posts() {
                 <div>
                   <Label>Platforms</Label>
                   <div className="mt-2 space-y-2">
-                    {["facebook", "instagram", "tiktok"].map((platform) => (
-                      <div key={platform} className="flex items-center space-x-2">
+                    {["facebook", "instagram", "tiktok"].map(platform => (
+                      <div
+                        key={platform}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={platform}
                           checked={formData.platforms.includes(platform)}
-                          onCheckedChange={(checked) => {
+                          onCheckedChange={checked => {
                             if (checked) {
                               setFormData({
                                 ...formData,
@@ -230,13 +235,16 @@ export default function Posts() {
                               setFormData({
                                 ...formData,
                                 platforms: formData.platforms.filter(
-                                  (p) => p !== platform
+                                  p => p !== platform
                                 ),
                               });
                             }
                           }}
                         />
-                        <Label htmlFor={platform} className="capitalize cursor-pointer">
+                        <Label
+                          htmlFor={platform}
+                          className="capitalize cursor-pointer"
+                        >
                           {platform}
                         </Label>
                       </div>
@@ -250,7 +258,7 @@ export default function Posts() {
                   <Input
                     type="datetime-local"
                     value={formData.scheduledAt}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData({ ...formData, scheduledAt: e.target.value })
                     }
                     className="mt-2"
@@ -259,14 +267,16 @@ export default function Posts() {
 
                 {/* Actions */}
                 <div className="flex gap-2 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Button variant="outline" onClick={() => setIsOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreatePost} disabled={createPostMutation.isPending}>
-                    {createPostMutation.isPending ? "Creating..." : "Create Post"}
+                  <Button
+                    onClick={handleCreatePost}
+                    disabled={createPostMutation.isPending}
+                  >
+                    {createPostMutation.isPending
+                      ? "Creating..."
+                      : "Create Post"}
                   </Button>
                 </div>
               </div>
@@ -278,7 +288,7 @@ export default function Posts() {
         <div className="space-y-4">
           {postsQuery.isLoading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3].map(i => (
                 <Skeleton key={i} className="h-32 w-full" />
               ))}
             </div>
@@ -293,7 +303,7 @@ export default function Posts() {
               </CardContent>
             </Card>
           ) : (
-            posts.map((post) => (
+            posts.map(post => (
               <Card key={post.id}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start gap-4">
@@ -313,15 +323,30 @@ export default function Posts() {
                       <div className="flex gap-2 mt-3">
                         {(() => {
                           try {
-                            const platformsStr = typeof post.platforms === 'string' ? post.platforms : '[]';
-                            const platforms: any[] = JSON.parse(platformsStr) as any[];
-                            return platforms.map((platform: any, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="capitalize">
-                                {platform === "facebook" && <Facebook className="h-3 w-3 mr-1" />}
-                                {platform === "instagram" && <Instagram className="h-3 w-3 mr-1" />}
-                                {String(platform)}
-                              </Badge>
-                            ));
+                            const platformsStr =
+                              typeof post.platforms === "string"
+                                ? post.platforms
+                                : "[]";
+                            const platforms: any[] = JSON.parse(
+                              platformsStr
+                            ) as any[];
+                            return platforms.map(
+                              (platform: any, idx: number) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="capitalize"
+                                >
+                                  {platform === "facebook" && (
+                                    <Facebook className="h-3 w-3 mr-1" />
+                                  )}
+                                  {platform === "instagram" && (
+                                    <Instagram className="h-3 w-3 mr-1" />
+                                  )}
+                                  {String(platform)}
+                                </Badge>
+                              )
+                            );
                           } catch {
                             return null;
                           }
@@ -339,10 +364,7 @@ export default function Posts() {
                         </Button>
                       )}
                       {post.status === "draft" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                        >
+                        <Button size="sm" variant="outline">
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}

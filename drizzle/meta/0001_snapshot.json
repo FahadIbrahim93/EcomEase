@@ -70,9 +70,7 @@
       "compositePrimaryKeys": {
         "activityLog_id": {
           "name": "activityLog_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -155,9 +153,7 @@
       "compositePrimaryKeys": {
         "analytics_id": {
           "name": "analytics_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -284,17 +280,13 @@
       "compositePrimaryKeys": {
         "invoices_id": {
           "name": "invoices_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "invoices_invoiceNumber_unique": {
           "name": "invoices_invoiceNumber_unique",
-          "columns": [
-            "invoiceNumber"
-          ]
+          "columns": ["invoiceNumber"]
         }
       },
       "checkConstraint": {}
@@ -424,17 +416,13 @@
       "compositePrimaryKeys": {
         "orders_id": {
           "name": "orders_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "orders_orderNumber_unique": {
           "name": "orders_orderNumber_unique",
-          "columns": [
-            "orderNumber"
-          ]
+          "columns": ["orderNumber"]
         }
       },
       "checkConstraint": {}
@@ -550,9 +538,7 @@
       "compositePrimaryKeys": {
         "posts_id": {
           "name": "posts_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -671,9 +657,7 @@
       "compositePrimaryKeys": {
         "products_id": {
           "name": "products_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -769,9 +753,7 @@
       "compositePrimaryKeys": {
         "socialConnections_id": {
           "name": "socialConnections_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -875,17 +857,13 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "users_openId_unique": {
           "name": "users_openId_unique",
-          "columns": [
-            "openId"
-          ]
+          "columns": ["openId"]
         }
       },
       "checkConstraint": {}

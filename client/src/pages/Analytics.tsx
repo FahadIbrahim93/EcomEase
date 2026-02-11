@@ -31,7 +31,7 @@ export default function Analytics() {
   };
 
   // Prepare chart data
-  const chartData = analyticsData.map((item) => ({
+  const chartData = analyticsData.map(item => ({
     date: new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -83,7 +83,9 @@ export default function Analytics() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -102,7 +104,9 @@ export default function Analytics() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Orders
+              </CardTitle>
               <ShoppingCart className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -119,7 +123,9 @@ export default function Analytics() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Avg Order Value
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
@@ -128,7 +134,8 @@ export default function Analytics() {
               ) : (
                 <>
                   <div className="text-2xl font-bold">
-                    ৳{avgOrderValue.toLocaleString(undefined, {
+                    ৳
+                    {avgOrderValue.toLocaleString(undefined, {
                       maximumFractionDigits: 0,
                     })}
                   </div>
@@ -140,7 +147,9 @@ export default function Analytics() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Best Platform</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Best Platform
+              </CardTitle>
               <Activity className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
@@ -288,7 +297,7 @@ export default function Analytics() {
             <CardContent>
               {platformStatsQuery.isLoading ? (
                 <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
+                  {[1, 2, 3].map(i => (
                     <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
@@ -311,11 +320,9 @@ export default function Analytics() {
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {totalRevenue > 0
-                            ? (
-                                ((stats.revenue / totalRevenue) * 100).toFixed(
-                                  1
-                                ) + "%"
-                              )
+                            ? ((stats.revenue / totalRevenue) * 100).toFixed(
+                                1
+                              ) + "%"
                             : "0%"}
                         </p>
                       </div>
