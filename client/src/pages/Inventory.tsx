@@ -29,6 +29,11 @@ import {
   Sparkles,
   Loader,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -172,8 +177,9 @@ export default function Inventory() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Product Name *</Label>
+                    <Label htmlFor="product-name">Product Name *</Label>
                     <Input
+                      id="product-name"
                       placeholder="e.g., Gold Necklace"
                       value={formData.name}
                       onChange={(e) =>
@@ -183,8 +189,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>SKU</Label>
+                    <Label htmlFor="sku">SKU</Label>
                     <Input
+                      id="sku"
                       placeholder="e.g., GN-001"
                       value={formData.sku}
                       onChange={(e) =>
@@ -197,7 +204,7 @@ export default function Inventory() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Description</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Button
                       size="sm"
                       variant="outline"
@@ -234,6 +241,7 @@ export default function Inventory() {
                     </Button>
                   </div>
                   <Input
+                    id="description"
                     placeholder="Product description"
                     value={formData.description}
                     onChange={(e) =>
@@ -245,8 +253,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Category</Label>
+                    <Label htmlFor="category">Category</Label>
                     <Input
+                      id="category"
                       placeholder="e.g., Jewelry"
                       value={formData.category}
                       onChange={(e) =>
@@ -256,8 +265,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Price *</Label>
+                    <Label htmlFor="price">Price *</Label>
                     <Input
+                      id="price"
                       placeholder="৳ 1500"
                       type="number"
                       value={formData.price}
@@ -271,8 +281,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Cost Price</Label>
+                    <Label htmlFor="cost-price">Cost Price</Label>
                     <Input
+                      id="cost-price"
                       placeholder="৳ 800"
                       type="number"
                       value={formData.costPrice}
@@ -283,8 +294,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Stock Quantity</Label>
+                    <Label htmlFor="stock-quantity">Stock Quantity</Label>
                     <Input
+                      id="stock-quantity"
                       placeholder="0"
                       type="number"
                       value={formData.stockQuantity}
@@ -300,8 +312,9 @@ export default function Inventory() {
                 </div>
 
                 <div>
-                  <Label>Low Stock Threshold</Label>
+                  <Label htmlFor="low-stock-threshold">Low Stock Threshold</Label>
                   <Input
+                    id="low-stock-threshold"
                     placeholder="5"
                     type="number"
                     value={formData.lowStockThreshold}
@@ -344,6 +357,7 @@ export default function Inventory() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
+            aria-label="Search products"
           />
         </div>
 
@@ -424,21 +438,35 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenDialog(product)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(product.id)}
-                              disabled={deleteProductMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenDialog(product)}
+                                  aria-label="Edit product"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit product</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-block">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(product.id)}
+                                    disabled={deleteProductMutation.isPending}
+                                    aria-label="Delete product"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete product</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
