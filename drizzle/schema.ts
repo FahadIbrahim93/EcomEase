@@ -1,4 +1,14 @@
-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json } from "drizzle-orm/mysql-core";
+import {
+  decimal,
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  boolean,
+  json,
+} from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 /**
@@ -33,7 +43,11 @@ export type InsertUser = typeof users.$inferInsert;
 export const socialConnections = mysqlTable("socialConnections", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["facebook", "instagram", "tiktok"]).notNull(),
+  platform: mysqlEnum("platform", [
+    "facebook",
+    "instagram",
+    "tiktok",
+  ]).notNull(),
   accountId: varchar("accountId", { length: 255 }).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accessToken: text("accessToken").notNull(),
@@ -77,7 +91,9 @@ export const posts = mysqlTable("posts", {
   mediaUrls: json("mediaUrls"), // Array of image/video URLs
   mediaType: mysqlEnum("mediaType", ["image", "video", "carousel"]).notNull(),
   platforms: json("platforms"), // Array of platform names
-  status: mysqlEnum("status", ["draft", "scheduled", "published", "failed"]).default("draft").notNull(),
+  status: mysqlEnum("status", ["draft", "scheduled", "published", "failed"])
+    .default("draft")
+    .notNull(),
   scheduledAt: timestamp("scheduledAt"),
   publishedAt: timestamp("publishedAt"),
   platformPostIds: json("platformPostIds"), // Map of platform -> post ID
@@ -94,7 +110,11 @@ export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   orderNumber: varchar("orderNumber", { length: 50 }).notNull().unique(),
-  platform: mysqlEnum("platform", ["facebook", "instagram", "tiktok"]).notNull(),
+  platform: mysqlEnum("platform", [
+    "facebook",
+    "instagram",
+    "tiktok",
+  ]).notNull(),
   platformOrderId: varchar("platformOrderId", { length: 255 }),
   customerName: varchar("customerName", { length: 255 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 20 }),
@@ -102,7 +122,16 @@ export const orders = mysqlTable("orders", {
   shippingAddress: text("shippingAddress"),
   items: json("items"), // Array of {productId, quantity, price}
   totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]).default("pending").notNull(),
+  status: mysqlEnum("status", [
+    "pending",
+    "paid",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ])
+    .default("pending")
+    .notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -122,11 +151,15 @@ export const invoices = mysqlTable("invoices", {
   dueDate: timestamp("dueDate"),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).default("0").notNull(),
-  discount: decimal("discount", { precision: 10, scale: 2 }).default("0").notNull(),
+  discount: decimal("discount", { precision: 10, scale: 2 })
+    .default("0")
+    .notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   pdfUrl: varchar("pdfUrl", { length: 500 }),
-  status: mysqlEnum("status", ["draft", "sent", "viewed", "paid", "overdue"]).default("draft").notNull(),
+  status: mysqlEnum("status", ["draft", "sent", "viewed", "paid", "overdue"])
+    .default("draft")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -154,9 +187,16 @@ export const analytics = mysqlTable("analytics", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   date: timestamp("date").notNull(),
-  platform: mysqlEnum("platform", ["facebook", "instagram", "tiktok", "overall"]),
+  platform: mysqlEnum("platform", [
+    "facebook",
+    "instagram",
+    "tiktok",
+    "overall",
+  ]),
   ordersCount: int("ordersCount").default(0).notNull(),
-  revenue: decimal("revenue", { precision: 10, scale: 2 }).default("0").notNull(),
+  revenue: decimal("revenue", { precision: 10, scale: 2 })
+    .default("0")
+    .notNull(),
   postsCount: int("postsCount").default(0).notNull(),
   totalEngagement: int("totalEngagement").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

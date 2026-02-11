@@ -10,7 +10,10 @@ type CookieCall = {
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] } {
+function createAuthContext(): {
+  ctx: TrpcContext;
+  clearedCookies: CookieCall[];
+} {
   const clearedCookies: CookieCall[] = [];
 
   const user: AuthenticatedUser = {
@@ -31,7 +34,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
       protocol: "https",
       headers: {
         "x-csrf-token": "test-token",
-        "cookie": "__Host-csrf=test-token",
+        cookie: "__Host-csrf=test-token",
       },
     } as any,
     res: {

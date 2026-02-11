@@ -40,7 +40,8 @@ export default function Inventory() {
   const updateProductMutation = trpc.products.update.useMutation();
   const deleteProductMutation = trpc.products.delete.useMutation();
   const adjustStockMutation = trpc.products.adjustStock.useMutation();
-  const generateDescriptionMutation = trpc.products.generateDescription.useMutation();
+  const generateDescriptionMutation =
+    trpc.products.generateDescription.useMutation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -132,11 +133,11 @@ export default function Inventory() {
   };
 
   const products = productsQuery.data || [];
-  const filteredProducts = products.filter((p) =>
+  const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const lowStockProducts = filteredProducts.filter(
-    (p) => p.stockQuantity <= p.lowStockThreshold
+    p => p.stockQuantity <= p.lowStockThreshold
   );
 
   return (
@@ -176,7 +177,7 @@ export default function Inventory() {
                     <Input
                       placeholder="e.g., Gold Necklace"
                       value={formData.name}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, name: e.target.value })
                       }
                       className="mt-2"
@@ -187,7 +188,7 @@ export default function Inventory() {
                     <Input
                       placeholder="e.g., GN-001"
                       value={formData.sku}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, sku: e.target.value })
                       }
                       className="mt-2"
@@ -203,22 +204,28 @@ export default function Inventory() {
                       variant="outline"
                       onClick={async () => {
                         try {
-                          const result = await generateDescriptionMutation.mutateAsync({
-                            name: formData.name,
-                            category: formData.category,
-                            price: formData.price,
-                            sku: formData.sku,
-                            existingDescription: formData.description,
-                          });
+                          const result =
+                            await generateDescriptionMutation.mutateAsync({
+                              name: formData.name,
+                              category: formData.category,
+                              price: formData.price,
+                              sku: formData.sku,
+                              existingDescription: formData.description,
+                            });
                           if (result.success) {
-                            setFormData({ ...formData, description: result.description });
+                            setFormData({
+                              ...formData,
+                              description: result.description,
+                            });
                             toast.success("Description generated!");
                           }
                         } catch (error) {
                           toast.error("Failed to generate description");
                         }
                       }}
-                      disabled={!formData.name || generateDescriptionMutation.isPending}
+                      disabled={
+                        !formData.name || generateDescriptionMutation.isPending
+                      }
                     >
                       {generateDescriptionMutation.isPending ? (
                         <>
@@ -236,7 +243,7 @@ export default function Inventory() {
                   <Input
                     placeholder="Product description"
                     value={formData.description}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData({ ...formData, description: e.target.value })
                     }
                     className="mt-2"
@@ -249,7 +256,7 @@ export default function Inventory() {
                     <Input
                       placeholder="e.g., Jewelry"
                       value={formData.category}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, category: e.target.value })
                       }
                       className="mt-2"
@@ -261,7 +268,7 @@ export default function Inventory() {
                       placeholder="৳ 1500"
                       type="number"
                       value={formData.price}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, price: e.target.value })
                       }
                       className="mt-2"
@@ -276,7 +283,7 @@ export default function Inventory() {
                       placeholder="৳ 800"
                       type="number"
                       value={formData.costPrice}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, costPrice: e.target.value })
                       }
                       className="mt-2"
@@ -288,7 +295,7 @@ export default function Inventory() {
                       placeholder="0"
                       type="number"
                       value={formData.stockQuantity}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({
                           ...formData,
                           stockQuantity: parseInt(e.target.value) || 0,
@@ -305,7 +312,7 @@ export default function Inventory() {
                     placeholder="5"
                     type="number"
                     value={formData.lowStockThreshold}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData({
                         ...formData,
                         lowStockThreshold: parseInt(e.target.value) || 5,
@@ -342,7 +349,7 @@ export default function Inventory() {
           <Input
             placeholder="Search products..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
         </div>
@@ -374,7 +381,7 @@ export default function Inventory() {
           <CardContent>
             {productsQuery.isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
@@ -397,7 +404,7 @@ export default function Inventory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.map(product => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">
                           {product.name}

@@ -1,8 +1,18 @@
 import { eq, and, desc, gte, sql, count, sum, lte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, socialConnections, products, posts, orders, invoices, activityLog, analytics } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertUser,
+  users,
+  socialConnections,
+  products,
+  posts,
+  orders,
+  invoices,
+  activityLog,
+  analytics,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -22,7 +32,10 @@ export async function getDb() {
 export async function ensureDb() {
   const db = await getDb();
   if (!db) {
-    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database not available",
+    });
   }
   return db;
 }
@@ -65,8 +78,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -93,7 +106,11 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -105,7 +122,11 @@ export async function getUserById(userId: number) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -114,7 +135,10 @@ export async function getUserById(userId: number) {
 export async function getSocialConnections(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(socialConnections).where(eq(socialConnections.userId, userId));
+  return db
+    .select()
+    .from(socialConnections)
+    .where(eq(socialConnections.userId, userId));
 }
 
 export async function getSocialConnection(userId: number, platform: string) {
@@ -155,7 +179,11 @@ export async function getProduct(userId: number, productId: number) {
 export async function getPosts(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(posts).where(eq(posts.userId, userId)).orderBy(desc(posts.createdAt));
+  return db
+    .select()
+    .from(posts)
+    .where(eq(posts.userId, userId))
+    .orderBy(desc(posts.createdAt));
 }
 
 export async function getPost(userId: number, postId: number) {
@@ -173,7 +201,11 @@ export async function getPost(userId: number, postId: number) {
 export async function getOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  return db
+    .select()
+    .from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
 }
 
 export async function getOrder(userId: number, orderId: number) {
@@ -191,7 +223,11 @@ export async function getOrder(userId: number, orderId: number) {
 export async function getInvoices(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
+  return db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.userId, userId))
+    .orderBy(desc(invoices.createdAt));
 }
 
 export async function getInvoice(userId: number, invoiceId: number) {
@@ -233,7 +269,12 @@ export async function getAnalytics(userId: number, days = 30) {
 // Platform Stats (DB-level aggregation)
 export async function getPlatformStats(userId: number) {
   const db = await getDb();
-  if (!db) return { facebook: { orders: 0, revenue: 0 }, instagram: { orders: 0, revenue: 0 }, tiktok: { orders: 0, revenue: 0 } };
+  if (!db)
+    return {
+      facebook: { orders: 0, revenue: 0 },
+      instagram: { orders: 0, revenue: 0 },
+      tiktok: { orders: 0, revenue: 0 },
+    };
 
   const result = await db
     .select({
@@ -251,10 +292,12 @@ export async function getPlatformStats(userId: number) {
     tiktok: { orders: 0, revenue: 0 },
   };
 
-  result.forEach((row) => {
+  result.forEach(row => {
     if (row.platform && stats[row.platform]) {
       stats[row.platform].orders = row.orderCount;
-      stats[row.platform].revenue = row.totalRevenue ? parseFloat(row.totalRevenue.toString()) : 0;
+      stats[row.platform].revenue = row.totalRevenue
+        ? parseFloat(row.totalRevenue.toString())
+        : 0;
     }
   });
 
@@ -273,7 +316,9 @@ export async function getDashboardStats(userId: number) {
   const statsResult = await db
     .select({
       totalProducts: count(products.id),
-      lowStockCount: count(sql`CASE WHEN ${products.stockQuantity} <= ${products.lowStockThreshold} THEN 1 END`),
+      lowStockCount: count(
+        sql`CASE WHEN ${products.stockQuantity} <= ${products.lowStockThreshold} THEN 1 END`
+      ),
     })
     .from(products)
     .where(eq(products.userId, userId));
@@ -287,12 +332,17 @@ export async function getDashboardStats(userId: number) {
     .where(and(eq(orders.userId, userId), gte(orders.createdAt, today)));
 
   const productStats = statsResult[0] || { totalProducts: 0, lowStockCount: 0 };
-  const orderStats = ordersStatsResult[0] || { todayOrdersCount: 0, todayRevenue: null };
+  const orderStats = ordersStatsResult[0] || {
+    todayOrdersCount: 0,
+    todayRevenue: null,
+  };
 
   return {
     totalProducts: productStats.totalProducts,
     lowStockCount: productStats.lowStockCount,
     todayOrders: orderStats.todayOrdersCount,
-    todayRevenue: orderStats.todayRevenue ? parseFloat(orderStats.todayRevenue.toString()) : 0,
+    todayRevenue: orderStats.todayRevenue
+      ? parseFloat(orderStats.todayRevenue.toString())
+      : 0,
   };
 }
