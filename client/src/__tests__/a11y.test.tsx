@@ -3,12 +3,14 @@ import * as React from "react";
 (globalThis as any).React = React;
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+// @ts-ignore
 import { axe, toHaveNoViolations } from "jest-axe";
 import { vi, expect, describe, test } from "vitest";
 import Home from "../pages/Home";
 import DashboardLayout from "../components/DashboardLayout";
 import { ThemeProvider } from "../contexts/ThemeContext";
 
+// @ts-ignore
 expect.extend(toHaveNoViolations);
 
 vi.mock("@/_core/hooks/useAuth", () => {
@@ -30,6 +32,7 @@ describe("Accessibility and keyboard behavior", () => {
     );
 
     const results = await axe(container);
+    // @ts-ignore
     expect(results).toHaveNoViolations();
   });
 

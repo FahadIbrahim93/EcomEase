@@ -42,9 +42,15 @@ const requireUser = t.middleware(async opts => {
   });
 });
 
-export const protectedProcedure = t.procedure.use(requireUser);
+/**
+ * Protected procedure that requires authentication and inherits CSRF protection from publicProcedure.
+ */
+export const protectedProcedure = publicProcedure.use(requireUser);
 
-export const adminProcedure = t.procedure.use(
+/**
+ * Admin procedure that requires admin role and inherits CSRF protection from publicProcedure.
+ */
+export const adminProcedure = publicProcedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
