@@ -33,6 +33,12 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Inventory() {
   const productsQuery = trpc.products.list.useQuery();
@@ -40,10 +46,12 @@ export default function Inventory() {
   const updateProductMutation = trpc.products.update.useMutation();
   const deleteProductMutation = trpc.products.delete.useMutation();
   const adjustStockMutation = trpc.products.adjustStock.useMutation();
-  const generateDescriptionMutation = trpc.products.generateDescription.useMutation();
+  const generateDescriptionMutation =
+    trpc.products.generateDescription.useMutation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -111,12 +119,15 @@ export default function Inventory() {
 
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure?")) {
+      setDeletingId(id);
       try {
         await deleteProductMutation.mutateAsync({ id });
         toast.success("Product deleted!");
         productsQuery.refetch();
       } catch (error) {
         toast.error("Failed to delete product");
+      } finally {
+        setDeletingId(null);
       }
     }
   };
@@ -174,6 +185,7 @@ export default function Inventory() {
                   <div>
                     <Label>Product Name *</Label>
                     <Input
+                      autoFocus
                       placeholder="e.g., Gold Necklace"
                       value={formData.name}
                       onChange={(e) =>
@@ -341,6 +353,7 @@ export default function Inventory() {
         <div>
           <Input
             placeholder="Search products..."
+            aria-label="Search products"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -424,21 +437,39 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenDialog(product)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(product.id)}
-                              disabled={deleteProductMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenDialog(product)}
+                                  aria-label="Edit product"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Product</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-block">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(product.id)}
+                                    disabled={deleteProductMutation.isPending}
+                                    aria-label="Delete product"
+                                  >
+                                    {deletingId === product.id ? (
+                                      <Spinner className="h-4 w-4" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete Product</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
