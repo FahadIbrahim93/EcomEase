@@ -44,11 +44,7 @@ export default function Settings() {
   });
 
   const handleConnect = async () => {
-    if (
-      !formData.accountId ||
-      !formData.accountName ||
-      !formData.accessToken
-    ) {
+    if (!formData.accountId || !formData.accountName || !formData.accessToken) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -92,8 +88,8 @@ export default function Settings() {
 
   const connections = socialQuery.data || [];
   const connectedPlatforms = connections
-    .filter((c) => c.isConnected)
-    .map((c) => c.platform);
+    .filter(c => c.isConnected)
+    .map(c => c.platform);
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
@@ -179,29 +175,24 @@ export default function Settings() {
                     <div>
                       <Label>Platform</Label>
                       <div className="mt-2 space-y-2">
-                        {["facebook", "instagram", "tiktok"].map(
-                          (platform) => (
-                            <button
-                              key={platform}
-                              onClick={() =>
-                                setSelectedPlatform(
-                                  platform as
-                                    | "facebook"
-                                    | "instagram"
-                                    | "tiktok"
-                                )
-                              }
-                              className={`w-full p-3 rounded-lg border-2 transition-colors capitalize flex items-center gap-2 ${
-                                selectedPlatform === platform
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border hover:border-primary/50"
-                              }`}
-                            >
-                              {getPlatformIcon(platform)}
-                              {platform}
-                            </button>
-                          )
-                        )}
+                        {["facebook", "instagram", "tiktok"].map(platform => (
+                          <button
+                            key={platform}
+                            onClick={() =>
+                              setSelectedPlatform(
+                                platform as "facebook" | "instagram" | "tiktok"
+                              )
+                            }
+                            className={`w-full p-3 rounded-lg border-2 transition-colors capitalize flex items-center gap-2 ${
+                              selectedPlatform === platform
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            {getPlatformIcon(platform)}
+                            {platform}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
@@ -211,7 +202,7 @@ export default function Settings() {
                       <Input
                         placeholder="Your account ID"
                         value={formData.accountId}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             accountId: e.target.value,
@@ -226,7 +217,7 @@ export default function Settings() {
                       <Input
                         placeholder="Your account name"
                         value={formData.accountName}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             accountName: e.target.value,
@@ -242,7 +233,7 @@ export default function Settings() {
                         placeholder="Your access token"
                         type="password"
                         value={formData.accessToken}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             accessToken: e.target.value,
@@ -258,7 +249,7 @@ export default function Settings() {
                         placeholder="Your refresh token"
                         type="password"
                         value={formData.refreshToken}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             refreshToken: e.target.value,
@@ -279,7 +270,9 @@ export default function Settings() {
                         onClick={handleConnect}
                         disabled={connectMutation.isPending}
                       >
-                        {connectMutation.isPending ? "Connecting..." : "Connect"}
+                        {connectMutation.isPending
+                          ? "Connecting..."
+                          : "Connect"}
                       </Button>
                     </div>
                   </div>
@@ -290,7 +283,7 @@ export default function Settings() {
           <CardContent>
             {socialQuery.isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
@@ -306,7 +299,7 @@ export default function Settings() {
               </div>
             ) : (
               <div className="space-y-3">
-                {connections.map((connection) => (
+                {connections.map(connection => (
                   <div
                     key={connection.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -332,9 +325,7 @@ export default function Settings() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() =>
-                            handleDisconnect(connection.platform)
-                          }
+                          onClick={() => handleDisconnect(connection.platform)}
                           disabled={disconnectMutation.isPending}
                         >
                           <Unlink2 className="h-4 w-4" />

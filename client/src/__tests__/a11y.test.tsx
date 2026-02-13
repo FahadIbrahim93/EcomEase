@@ -49,10 +49,16 @@ describe("Accessibility and keyboard behavior", () => {
 
     // initial width from localStorage or default
     const SIDEBAR_WIDTH_KEY = "sidebar-width";
-    const initial = parseInt(localStorage.getItem(SIDEBAR_WIDTH_KEY) || "280", 10);
+    const initial = parseInt(
+      localStorage.getItem(SIDEBAR_WIDTH_KEY) || "280",
+      10
+    );
 
     await user.keyboard("{ArrowRight}");
-    const after = parseInt(localStorage.getItem(SIDEBAR_WIDTH_KEY) || String(initial), 10);
+    const after = parseInt(
+      localStorage.getItem(SIDEBAR_WIDTH_KEY) || String(initial),
+      10
+    );
 
     expect(after).toBeGreaterThanOrEqual(initial);
   });

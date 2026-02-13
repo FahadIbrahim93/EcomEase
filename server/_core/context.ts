@@ -26,7 +26,8 @@ export async function createContext(
 
   // Ensure CSRF token is initialized for both authenticated and anonymous users.
   // We check for the httpOnly cookie specifically.
-  const cookies = req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
+  const cookies =
+    req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
   if (!cookies["__Host-csrf"]) {
     const token = generateCsrfToken();
     setCsrfToken(res, token, ENV.isProduction);

@@ -48,8 +48,8 @@ export default function Home() {
           Manage Your Social Commerce in One Place
         </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Post to Facebook, Instagram, and TikTok. Manage inventory. Track orders.
-          All from a single, beautiful dashboard.
+          Post to Facebook, Instagram, and TikTok. Manage inventory. Track
+          orders. All from a single, beautiful dashboard.
         </p>
         <Button
           size="lg"
@@ -66,28 +66,40 @@ export default function Home() {
           <h3 className="text-3xl font-bold text-center mb-12">Features</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <Share2 className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
+              <Share2
+                className="h-12 w-12 text-primary mx-auto mb-4"
+                aria-hidden="true"
+              />
               <h4 className="font-semibold mb-2">Multi-Platform Posting</h4>
               <p className="text-gray-600 text-sm">
                 Post to all platforms simultaneously with scheduling
               </p>
             </div>
             <div className="text-center">
-              <Package className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
+              <Package
+                className="h-12 w-12 text-primary mx-auto mb-4"
+                aria-hidden="true"
+              />
               <h4 className="font-semibold mb-2">Inventory Management</h4>
               <p className="text-gray-600 text-sm">
                 Track stock and get low-stock alerts automatically
               </p>
             </div>
             <div className="text-center">
-              <ShoppingCart className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
+              <ShoppingCart
+                className="h-12 w-12 text-primary mx-auto mb-4"
+                aria-hidden="true"
+              />
               <h4 className="font-semibold mb-2">Unified Orders</h4>
               <p className="text-gray-600 text-sm">
                 See all orders from all platforms in one inbox
               </p>
             </div>
             <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" aria-hidden="true" />
+              <BarChart3
+                className="h-12 w-12 text-primary mx-auto mb-4"
+                aria-hidden="true"
+              />
               <h4 className="font-semibold mb-2">Analytics</h4>
               <p className="text-gray-600 text-sm">
                 Track sales trends and platform performance
@@ -104,7 +116,8 @@ export default function Home() {
             Ready to grow your business?
           </h3>
           <p className="text-lg mb-8 opacity-90">
-            Join thousands of sellers managing their social commerce with ShopEase
+            Join thousands of sellers managing their social commerce with
+            ShopEase
           </p>
           <Button
             size="lg"
