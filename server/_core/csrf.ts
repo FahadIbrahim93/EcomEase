@@ -17,7 +17,11 @@ export function generateCsrfToken(): string {
  * Cookie is httpOnly, secure, sameSite=strict for storage
  * Header is sent for client to include in mutation requests
  */
-export function setCsrfToken(res: Response, token: string, isSecure: boolean): void {
+export function setCsrfToken(
+  res: Response,
+  token: string,
+  isSecure: boolean
+): void {
   // 1 year in milliseconds to match session duration
   const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -50,10 +54,13 @@ export function setCsrfToken(res: Response, token: string, isSecure: boolean): v
  * 2. The server validates that the header-provided token matches the cookie-stored token
  */
 export function verifyCsrfToken(req: Request): boolean {
-  const headerToken = req.headers[CSRF_HEADER_NAME.toLowerCase()] as string | undefined;
+  const headerToken = req.headers[CSRF_HEADER_NAME.toLowerCase()] as
+    | string
+    | undefined;
 
   // Fallback to manual cookie parsing if cookie-parser middleware is not used
-  const cookies = req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
+  const cookies =
+    req.cookies || (req.headers.cookie ? parseCookies(req.headers.cookie) : {});
   const cookieToken = cookies[CSRF_COOKIE_NAME];
 
   // Both must exist and match
