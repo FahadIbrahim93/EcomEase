@@ -28,7 +28,24 @@ import {
   Package,
   Sparkles,
   Loader,
+  Loader2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -44,6 +61,7 @@ export default function Inventory() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -110,14 +128,15 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure?")) {
-      try {
-        await deleteProductMutation.mutateAsync({ id });
-        toast.success("Product deleted!");
-        productsQuery.refetch();
-      } catch (error) {
-        toast.error("Failed to delete product");
-      }
+    setDeletingId(id);
+    try {
+      await deleteProductMutation.mutateAsync({ id });
+      toast.success("Product deleted!");
+      productsQuery.refetch();
+    } catch (error) {
+      toast.error("Failed to delete product");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -172,8 +191,10 @@ export default function Inventory() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Product Name *</Label>
+                    <Label htmlFor="product-name">Product Name *</Label>
                     <Input
+                      id="product-name"
+                      autoFocus
                       placeholder="e.g., Gold Necklace"
                       value={formData.name}
                       onChange={(e) =>
@@ -183,8 +204,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>SKU</Label>
+                    <Label htmlFor="product-sku">SKU</Label>
                     <Input
+                      id="product-sku"
                       placeholder="e.g., GN-001"
                       value={formData.sku}
                       onChange={(e) =>
@@ -197,7 +219,7 @@ export default function Inventory() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Label>Description</Label>
+                    <Label htmlFor="product-description">Description</Label>
                     <Button
                       size="sm"
                       variant="outline"
@@ -234,6 +256,7 @@ export default function Inventory() {
                     </Button>
                   </div>
                   <Input
+                    id="product-description"
                     placeholder="Product description"
                     value={formData.description}
                     onChange={(e) =>
@@ -245,8 +268,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Category</Label>
+                    <Label htmlFor="product-category">Category</Label>
                     <Input
+                      id="product-category"
                       placeholder="e.g., Jewelry"
                       value={formData.category}
                       onChange={(e) =>
@@ -256,8 +280,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Price *</Label>
+                    <Label htmlFor="product-price">Price *</Label>
                     <Input
+                      id="product-price"
                       placeholder="৳ 1500"
                       type="number"
                       value={formData.price}
@@ -271,8 +296,9 @@ export default function Inventory() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Cost Price</Label>
+                    <Label htmlFor="product-cost-price">Cost Price</Label>
                     <Input
+                      id="product-cost-price"
                       placeholder="৳ 800"
                       type="number"
                       value={formData.costPrice}
@@ -283,8 +309,9 @@ export default function Inventory() {
                     />
                   </div>
                   <div>
-                    <Label>Stock Quantity</Label>
+                    <Label htmlFor="product-stock">Stock Quantity</Label>
                     <Input
+                      id="product-stock"
                       placeholder="0"
                       type="number"
                       value={formData.stockQuantity}
@@ -300,8 +327,9 @@ export default function Inventory() {
                 </div>
 
                 <div>
-                  <Label>Low Stock Threshold</Label>
+                  <Label htmlFor="product-threshold">Low Stock Threshold</Label>
                   <Input
+                    id="product-threshold"
                     placeholder="5"
                     type="number"
                     value={formData.lowStockThreshold}
@@ -341,6 +369,7 @@ export default function Inventory() {
         <div>
           <Input
             placeholder="Search products..."
+            aria-label="Search products"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -424,21 +453,63 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenDialog(product)}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(product.id)}
-                              disabled={deleteProductMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenDialog(product)}
+                                  aria-label="Edit product"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Product</TooltipContent>
+                            </Tooltip>
+                            <AlertDialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        aria-label="Delete product"
+                                        disabled={deletingId === product.id}
+                                      >
+                                        {deletingId === product.id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete Product</TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete Product
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "
+                                    {product.name}"? This action cannot be
+                                    undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-white hover:bg-destructive/90"
+                                    onClick={() => handleDelete(product.id)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
